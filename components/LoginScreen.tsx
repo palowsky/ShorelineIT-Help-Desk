@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { User } from '../types';
-import UserCircleIcon from './icons/UserCircleIcon';
+import { BrandingSettings } from '../types';
 import { useLocalization } from '../context/LocalizationContext';
 
 interface LoginScreenProps {
   onLogin: (username: string, pin: string) => boolean;
+  branding: BrandingSettings;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, branding }) => {
   const { t } = useLocalization();
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
@@ -25,7 +25,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   return (
     <div className="flex min-h-screen flex-col justify-center bg-gray-100 dark:bg-gray-900 py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <UserCircleIcon className="mx-auto h-12 w-auto text-primary-600" />
+        {branding.logoUrl ? (
+          <img className="mx-auto h-16 w-auto" src={branding.logoUrl} alt={branding.companyName} />
+        ) : (
+          <h1 className="text-center text-4xl font-bold text-primary-600">{branding.companyName}</h1>
+        )}
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t('login.title')}
         </h2>

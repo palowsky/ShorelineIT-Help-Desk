@@ -6,7 +6,8 @@ import NewTicketModal from './components/NewTicketModal';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
 import UserManagement from './components/UserManagement';
-import { Ticket, User, Role, TicketStatus, TicketPriority, TicketCategory } from './types';
+import BrandingSettings from './components/BrandingSettings';
+import { Ticket, User, Role, TicketStatus, TicketPriority, TicketCategory, BrandingSettings as BrandingSettingsType } from './types';
 
 // Mock Data
 const initialUsers: User[] = [
@@ -64,6 +65,11 @@ const initialTickets: Ticket[] = [
   },
 ];
 
+const defaultBranding: BrandingSettingsType = {
+  companyName: 'Help Desk',
+  logoUrl: '',
+  faviconUrl: '/vite.svg',
+};
 
 const App: React.FC = () => {
     const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
@@ -71,11 +77,33 @@ const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
     const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
-    const [view, setView] = useState<'tickets' | 'dashboard' | 'users'>('tickets');
+    const [view, setView] = useState<'tickets' | 'dashboard' | 'users' | 'settings'>('tickets');
     const [showArchived, setShowArchived] = useState(false);
     const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
     const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null);
+    const [branding, setBranding] = useState<BrandingSettingsType>(defaultBranding);
     
+    // Load branding from localStorage on initial load
+    useEffect(() => {
+        try {
+            const savedBranding = localStorage.getItem('branding');
+            if (savedBranding) {
+                setBranding(JSON.parse(savedBranding));
+            }
+        } catch (error) {
+            console.error("Failed to parse branding from localStorage", error);
+        }
+    }, []);
+    
+    // Update document title and favicon when branding changes
+    useEffect(() => {
+        document.title = branding.companyName;
+        const favicon = document.getElementById('favicon') as HTMLLinkElement | null;
+        if (favicon && branding.faviconUrl) {
+            favicon.href = branding.faviconUrl;
+        }
+    }, [branding]);
+
     const filteredTickets = useMemo(() => {
         let displayTickets = tickets;
 
@@ -200,6 +228,17 @@ const App: React.FC = () => {
         };
         setUsers([newUser, ...users]);
     };
+    
+    const handleChangeAvatar = (newAvatarUrl: string) => {
+        if (!currentUser) return;
+        const updatedUser = { ...currentUser, avatar: newAvatarUrl };
+        handleUpdateUser(updatedUser);
+    };
+    
+    const handleSaveBranding = (newBranding: BrandingSettingsType) => {
+        setBranding(newBranding);
+        localStorage.setItem('branding', JSON.stringify(newBranding));
+    };
 
     const selectedTicket = useMemo(() => {
         return tickets.find(ticket => ticket.id === selectedTicketId);
@@ -210,7 +249,7 @@ const App: React.FC = () => {
     }, [users]);
 
     if (!currentUser) {
-        return <LoginScreen onLogin={handleLogin} />;
+        return <LoginScreen onLogin={handleLogin} branding={branding} />;
     }
 
     return (
@@ -221,6 +260,8 @@ const App: React.FC = () => {
                 onLogout={handleLogout}
                 view={view}
                 onSetView={setView}
+                onChangeAvatar={handleChangeAvatar}
+                branding={branding}
             />
             <main className="flex-grow flex min-h-0">
                 {view === 'tickets' && (
@@ -263,6 +304,10 @@ const App: React.FC = () => {
                     onDeleteUser={handleDeleteUser}
                     onCreateUser={handleCreateUser}
                  />}
+                {view === 'settings' && <BrandingSettings
+                    currentBranding={branding}
+                    onSave={handleSaveBranding}
+                />}
             </main>
             {isNewTicketModalOpen && (
                 <NewTicketModal

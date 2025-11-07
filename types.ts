@@ -49,3 +49,9 @@ export interface Ticket {
   comments: Comment[];
   isArchived: boolean;
 }
+
+export interface BrandingSettings {
+  companyName: string;
+  logoUrl: string;
+  faviconUrl: string;
+}
