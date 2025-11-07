@@ -2,6 +2,7 @@ import React from 'react';
 import { Ticket } from '../types';
 import StatusBadge from './StatusBadge';
 import ChevronRightIcon from './icons/ChevronRightIcon';
+import { useLocalization } from '../context/LocalizationContext';
 
 interface TicketItemProps {
   ticket: Ticket;
@@ -11,6 +12,7 @@ interface TicketItemProps {
 
 const TicketItem: React.FC<TicketItemProps> = ({ ticket, isSelected, onSelect }) => {
   const { id, subject, customer, status, updatedAt } = ticket;
+  const { locale } = useLocalization();
   
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -20,7 +22,7 @@ const TicketItem: React.FC<TicketItemProps> = ({ ticket, isSelected, onSelect })
         minute: '2-digit',
         hour12: true
     };
-    return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
+    return new Intl.DateTimeFormat(locale, options).format(new Date(dateString));
   };
   
   return (

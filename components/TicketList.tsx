@@ -1,6 +1,7 @@
 import React from 'react';
 import { Ticket } from '../types';
 import TicketItem from './TicketItem';
+import { useLocalization } from '../context/LocalizationContext';
 
 interface TicketListProps {
   tickets: Ticket[];
@@ -9,10 +10,12 @@ interface TicketListProps {
 }
 
 const TicketList: React.FC<TicketListProps> = ({ tickets, selectedTicketId, onSelectTicket }) => {
+  const { t } = useLocalization();
+
   return (
     <div className="bg-white dark:bg-gray-800 h-full">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-        <h2 className="text-lg font-semibold">All Tickets ({tickets.length})</h2>
+        <h2 className="text-lg font-semibold">{t('ticketList.title')} ({tickets.length})</h2>
       </div>
       <ul className="divide-y divide-gray-200 dark:divide-gray-700">
         {tickets.map(ticket => (
@@ -25,7 +28,7 @@ const TicketList: React.FC<TicketListProps> = ({ tickets, selectedTicketId, onSe
         ))}
         {tickets.length === 0 && (
             <li className="p-4 text-center text-gray-500">
-                No tickets found.
+                {t('ticketList.noTickets')}
             </li>
         )}
       </ul>

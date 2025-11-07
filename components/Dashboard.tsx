@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Ticket, User, TicketPriority, TicketCategory } from '../types';
 import Header from './Header';
 import TicketList from './TicketList';
 import TicketDetails from './TicketDetails';
 import NewTicketModal from './NewTicketModal';
+import { useLocalization } from '../context/LocalizationContext';
 
 interface DashboardProps {
   tickets: Ticket[];
@@ -23,6 +23,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ tickets, currentUser, onAddTicket, onUpdateTicket }) => {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(tickets[0] || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useLocalization();
 
   const handleSelectTicket = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -49,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tickets, currentUser, onAddTicket
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <p className="text-gray-500">Select a ticket to view details</p>
+              <p className="text-gray-500">{t('dashboard.selectTicket')}</p>
             </div>
           )}
         </div>
