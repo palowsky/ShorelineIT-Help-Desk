@@ -1,9 +1,15 @@
-
+import { User as User_1 } from "./types";
 export enum TicketStatus {
   Open = 'Open',
   InProgress = 'In Progress',
   Resolved = 'Resolved',
   Closed = 'Closed',
+}
+
+export enum Role {
+  Admin = 'Admin',
+  Agent = 'Agent',
+  User = 'User',
 }
 
 export type TicketCategory = 'Hardware' | 'Software' | 'Network' | 'Account' | 'Other';
@@ -13,6 +19,7 @@ export interface User {
   id: string;
   name: string;
   avatar: string; // URL to avatar image
+  role: Role;
 }
 
 export interface Comment {
@@ -34,4 +41,5 @@ export interface Ticket {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   comments: Comment[];
+  isArchived?: boolean;
 }

@@ -5,6 +5,9 @@
   },
   "ticketList": {
     "title": "Todos los Tickets",
+    "archivedTitle": "Tickets Archivados",
+    "showArchived": "Mostrar Archivados",
+    "showUnassigned": "Mostrar Solo Sin Asignar",
     "noTickets": "No se encontraron tickets."
   },
   "ticketDetails": {
@@ -16,7 +19,12 @@
     "priority": "Prioridad",
     "lastUpdated": "Última Actualización",
     "description": "Descripción",
-    "conversation": "Conversación"
+    "conversation": "Conversación",
+    "noComments": "Aún no hay comentarios.",
+    "addCommentPlaceholder": "Añadir un comentario..."
+  },
+  "ticket": {
+    "archived": "Archivado"
   },
   "newTicketModal": {
     "title": "Nuevo Ticket de Soporte",
@@ -40,7 +48,12 @@
   },
   "buttons": {
     "cancel": "Cancelar",
-    "createTicket": "Crear Ticket"
+    "createTicket": "Crear Ticket",
+    "saveChanges": "Guardar Cambios",
+    "addComment": "Añadir Comentario",
+    "archive": "Archivar",
+    "unarchive": "Desarchivar",
+    "edit": "Editar"
   },
   "statuses": {
     "Open": "Abierto",

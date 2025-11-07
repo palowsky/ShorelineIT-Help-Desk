@@ -1,11 +1,12 @@
-import React, { useState, FormEvent } from 'react';
-import { TicketCategory, TicketPriority } from '../types';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { TicketCategory, TicketPriority, User, Role } from '../types';
 import XIcon from './icons/XIcon';
 import SparklesIcon from './icons/SparklesIcon';
 import { suggestCategoryAndPriority } from '../services/geminiService';
 import { useLocalization } from '../context/LocalizationContext';
 
 interface NewTicketModalProps {
+  currentUser: User;
   onClose: () => void;
   onAddTicket: (ticketData: {
     subject: string;
@@ -20,7 +21,7 @@ interface NewTicketModalProps {
 const ticketCategories: TicketCategory[] = ['Hardware', 'Software', 'Network', 'Account', 'Other'];
 const ticketPriorities: TicketPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 
-const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket }) => {
+const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket, currentUser }) => {
   const { t } = useLocalization();
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -30,6 +31,17 @@ const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket })
   const [priority, setPriority] = useState<TicketPriority>('Medium');
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [error, setError] = useState('');
+  
+  const isCustomer = currentUser.role === Role.User;
+
+  useEffect(() => {
+    if (isCustomer) {
+      setCustomerName(currentUser.name);
+      // Assuming email can be derived or is stored, otherwise use a placeholder
+      setCustomerEmail(`${currentUser.name.split(' ')[0].toLowerCase()}@example.com`);
+    }
+  }, [currentUser, isCustomer]);
+
 
   const handleSuggest = async () => {
     if (!description) {
@@ -77,11 +89,11 @@ const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket })
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
                     <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newTicketModal.customerName')}</label>
-                    <input type="text" name="customerName" id="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm"/>
+                    <input type="text" name="customerName" id="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} required disabled={isCustomer} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700 sm:text-sm"/>
                 </div>
                 <div>
                     <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newTicketModal.customerEmail')}</label>
-                    <input type="email" name="customerEmail" id="customerEmail" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm"/>
+                    <input type="email" name="customerEmail" id="customerEmail" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} required disabled={isCustomer} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700 sm:text-sm"/>
                 </div>
             </div>
             <div>

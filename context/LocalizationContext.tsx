@@ -5,22 +5,40 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 const en = {
   "header": {
     "title": "Support Desk",
-    "newTicket": "New Ticket"
+    "newTicket": "New Ticket",
+    "dashboard": "Dashboard"
   },
   "ticketList": {
     "title": "All Tickets",
-    "noTickets": "No tickets found."
+    "archivedTitle": "Archived Tickets",
+    "showArchived": "Show Archived",
+    "showUnassigned": "Show Unassigned Only",
+    "noTickets": "No tickets found.",
+    "filterTypes": {
+      "status": "Status",
+      "priority": "Priority",
+      "category": "Category"
+    },
+    "filteringBy": "Filtering by {type}: {value}",
+    "clearFilter": "Clear"
   },
   "ticketDetails": {
     "customer": "Customer",
     "agent": "Agent",
+    "assignee": "Assignee",
     "unassigned": "Unassigned",
     "created": "Created",
     "category": "Category",
     "priority": "Priority",
+    "status": "Status",
     "lastUpdated": "Last Updated",
     "description": "Description",
-    "conversation": "Conversation"
+    "conversation": "Conversation",
+    "noComments": "No comments yet.",
+    "addCommentPlaceholder": "Add a comment..."
+  },
+  "ticket": {
+    "archived": "Archived"
   },
   "newTicketModal": {
     "title": "New Support Ticket",
@@ -37,14 +55,29 @@ const en = {
     "errorRequiredFields": "Please fill all required fields."
   },
   "dashboard": {
-    "selectTicket": "Select a ticket to view details"
+    "title": "Reports Dashboard",
+    "selectTicket": "Select a ticket to view details",
+    "totalTickets": "Total Tickets",
+    "openTickets": "Open",
+    "inProgressTickets": "In Progress",
+    "resolvedTickets": "Resolved",
+    "byPriority": "Tickets by Priority",
+    "byCategory": "Tickets by Category",
+    "noData": "No data available."
   },
   "roles": {
-    "agent": "Agent"
+    "admin": "Admin",
+    "agent": "Agent",
+    "user": "User"
   },
   "buttons": {
     "cancel": "Cancel",
-    "createTicket": "Create Ticket"
+    "createTicket": "Create Ticket",
+    "saveChanges": "Save Changes",
+    "addComment": "Add Comment",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "edit": "Edit"
   },
   "statuses": {
     "Open": "Open",
@@ -70,22 +103,40 @@ const en = {
 const es = {
   "header": {
     "title": "Mesa de Ayuda",
-    "newTicket": "Nuevo Ticket"
+    "newTicket": "Nuevo Ticket",
+    "dashboard": "Tablero"
   },
   "ticketList": {
     "title": "Todos los Tickets",
-    "noTickets": "No se encontraron tickets."
+    "archivedTitle": "Tickets Archivados",
+    "showArchived": "Mostrar Archivados",
+    "showUnassigned": "Mostrar Solo Sin Asignar",
+    "noTickets": "No se encontraron tickets.",
+    "filterTypes": {
+      "status": "Estado",
+      "priority": "Prioridad",
+      "category": "Categoría"
+    },
+    "filteringBy": "Filtrando por {type}: {value}",
+    "clearFilter": "Quitar"
   },
   "ticketDetails": {
     "customer": "Cliente",
     "agent": "Agente",
+    "assignee": "Asignado a",
     "unassigned": "Sin Asignar",
     "created": "Creado",
     "category": "Categoría",
     "priority": "Prioridad",
+    "status": "Estado",
     "lastUpdated": "Última Actualización",
     "description": "Descripción",
-    "conversation": "Conversación"
+    "conversation": "Conversación",
+    "noComments": "Aún no hay comentarios.",
+    "addCommentPlaceholder": "Añadir un comentario..."
+  },
+  "ticket": {
+    "archived": "Archivado"
   },
   "newTicketModal": {
     "title": "Nuevo Ticket de Soporte",
@@ -98,18 +149,33 @@ const es = {
     "aiSuggest": "Sugerencia IA",
     "suggesting": "Sugiriendo...",
     "errorDescription": "Por favor, ingrese una descripción para obtener sugerencias.",
-    "errorAISuggest": "No se pudieron obtener sugerencias de la IA. Por favor, seleccione manualmente.",
+    "errorAISuggest": "No se pudieron obtener sugerencias de la IA. Por favor, seleccione manually.",
     "errorRequiredFields": "Por favor, complete todos los campos obligatorios."
   },
   "dashboard": {
-    "selectTicket": "Seleccione un ticket para ver los detalles"
+    "title": "Tablero de Reportes",
+    "selectTicket": "Seleccione un ticket para ver los detalles",
+    "totalTickets": "Tickets Totales",
+    "openTickets": "Abiertos",
+    "inProgressTickets": "En Progreso",
+    "resolvedTickets": "Resueltos",
+    "byPriority": "Tickets por Prioridad",
+    "byCategory": "Tickets por Categoría",
+    "noData": "No hay datos disponibles."
   },
   "roles": {
-    "agent": "Agente"
+    "admin": "Administrador",
+    "agent": "Agente",
+    "user": "Usuario"
   },
   "buttons": {
     "cancel": "Cancelar",
-    "createTicket": "Crear Ticket"
+    "createTicket": "Crear Ticket",
+    "saveChanges": "Guardar Cambios",
+    "addComment": "Añadir Comentario",
+    "archive": "Archivar",
+    "unarchive": "Desarchivar",
+    "edit": "Editar"
   },
   "statuses": {
     "Open": "Abierto",
@@ -133,10 +199,8 @@ const es = {
 };
 
 
-// Define the shape of your translations
 type Translations = typeof en;
 
-// Define the languages you support
 const translations: { [key: string]: Translations } = {
   en,
   es,
@@ -145,7 +209,7 @@ const translations: { [key: string]: Translations } = {
 interface LocalizationContextType {
   locale: 'en' | 'es';
   setLocale: (locale: 'en' | 'es') => void;
-  t: (key: string) => string;
+  t: (key: string, fallbackOrReplacements?: string | { [key: string]: string }) => string;
 }
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
@@ -153,21 +217,30 @@ const LocalizationContext = createContext<LocalizationContextType | undefined>(u
 export const LocalizationProvider = ({ children }: { children: ReactNode }) => {
     const [locale, setLocale] = useState<'en' | 'es'>('en');
 
-    const t = (key: string): string => {
+    const t = (key: string, fallbackOrReplacements?: string | { [key: string]: string }): string => {
         const keys = key.split('.');
         let result: any = translations[locale];
         for (const k of keys) {
             result = result?.[k];
             if (result === undefined) {
-                // Fallback to English if translation is missing
                 let fallbackResult: any = translations['en'];
                 for (const fk of keys) {
                     fallbackResult = fallbackResult?.[fk];
                 }
-                return fallbackResult || key;
+                result = fallbackResult;
+                break;
             }
         }
-        return result || key;
+
+        let finalString = result || (typeof fallbackOrReplacements === 'string' ? fallbackOrReplacements : key);
+
+        if (typeof fallbackOrReplacements === 'object') {
+            Object.entries(fallbackOrReplacements).forEach(([rKey, rValue]) => {
+                finalString = finalString.replace(`{${rKey}}`, rValue);
+            });
+        }
+        
+        return finalString;
     };
 
     return (

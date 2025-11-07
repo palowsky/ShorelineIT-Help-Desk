@@ -5,6 +5,9 @@
   },
   "ticketList": {
     "title": "All Tickets",
+    "archivedTitle": "Archived Tickets",
+    "showArchived": "Show Archived",
+    "showUnassigned": "Show Unassigned Only",
     "noTickets": "No tickets found."
   },
   "ticketDetails": {
@@ -16,7 +19,12 @@
     "priority": "Priority",
     "lastUpdated": "Last Updated",
     "description": "Description",
-    "conversation": "Conversation"
+    "conversation": "Conversation",
+    "noComments": "No comments yet.",
+    "addCommentPlaceholder": "Add a comment..."
+  },
+  "ticket": {
+    "archived": "Archived"
   },
   "newTicketModal": {
     "title": "New Support Ticket",
@@ -40,7 +48,12 @@
   },
   "buttons": {
     "cancel": "Cancel",
-    "createTicket": "Create Ticket"
+    "createTicket": "Create Ticket",
+    "saveChanges": "Save Changes",
+    "addComment": "Add Comment",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "edit": "Edit"
   },
   "statuses": {
     "Open": "Open",

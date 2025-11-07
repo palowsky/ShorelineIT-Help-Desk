@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, User, TicketStatus, TicketPriority, TicketCategory, Comment } from '../types';
+import { Ticket, User, TicketStatus, TicketPriority, TicketCategory, Comment, Role } from '../types';
 import StatusBadge from './StatusBadge';
 import PencilIcon from './icons/PencilIcon';
+import ArchiveBoxIcon from './icons/ArchiveBoxIcon';
+import ArchiveBoxArrowUpIcon from './icons/ArchiveBoxArrowUpIcon';
 import { useLocalization } from '../context/LocalizationContext';
 
 interface TicketDetailsProps {
     ticket: Ticket;
     currentUser: User;
     onUpdateTicket: (ticket: Ticket) => void;
+    technicians: User[];
 }
 
 const ticketStatuses = Object.values(TicketStatus);
 const ticketCategories: TicketCategory[] = ['Hardware', 'Software', 'Network', 'Account', 'Other'];
 const ticketPriorities: TicketPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 
-const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUpdateTicket }) => {
+const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUpdateTicket, technicians }) => {
     const { t, locale } = useLocalization();
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({ ...ticket });
     const [newComment, setNewComment] = useState('');
 
+    const isPrivilegedUser = currentUser.role === Role.Admin || currentUser.role === Role.Agent;
+
     useEffect(() => {
         setEditData({ ...ticket });
-        setIsEditing(false);
+        // Don't exit edit mode if the ticket is updated by this component
+        // setIsEditing(false); 
         setNewComment('');
     }, [ticket]);
 
@@ -35,6 +41,11 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const agent = technicians.find(t => t.id === e.target.value);
+        setEditData(prev => ({ ...prev, agent: agent || undefined }));
     };
 
     const handleSave = () => {
@@ -58,6 +69,10 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
         onUpdateTicket({ ...ticket, comments: [...ticket.comments, comment] });
         setNewComment('');
     };
+    
+    const handleArchiveToggle = () => {
+        onUpdateTicket({ ...ticket, isArchived: !ticket.isArchived });
+    };
 
     return (
         <div className="p-6 h-full flex flex-col">
@@ -65,81 +80,86 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                 <div className="flex items-start justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div>
                         <p className="text-sm text-primary-600 dark:text-primary-400 font-semibold">{ticket.id}</p>
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                name="subject"
-                                value={editData.subject}
-                                onChange={handleInputChange}
-                                className="text-2xl font-bold bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-0 focus:border-primary-500 w-full"
-                            />
+                        {isEditing && isPrivilegedUser ? (
+                            <input type="text" name="subject" value={editData.subject} onChange={handleInputChange} className="text-2xl font-bold bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-0 focus:border-primary-500 w-full" />
                         ) : (
                             <h1 className="text-2xl font-bold">{ticket.subject}</h1>
                         )}
                     </div>
-                    <div className="flex items-center gap-4">
-                        <StatusBadge status={ticket.status} />
-                        <button onClick={() => setIsEditing(!isEditing)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <PencilIcon className="h-5 w-5" />
-                        </button>
+                    <div className="flex items-center gap-2">
+                        {!isEditing && <StatusBadge status={ticket.status} />}
+                        {isPrivilegedUser && (
+                           <>
+                             <button onClick={handleArchiveToggle} title={ticket.isArchived ? t('buttons.unarchive') : t('buttons.archive')} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                                {ticket.isArchived ? <ArchiveBoxArrowUpIcon className="h-5 w-5" /> : <ArchiveBoxIcon className="h-5 w-5" />}
+                             </button>
+                             <button onClick={() => setIsEditing(!isEditing)} title={t('buttons.edit')} className={`p-2 rounded-md ${isEditing ? 'bg-primary-100 dark:bg-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                                <PencilIcon className="h-5 w-5" />
+                             </button>
+                           </>
+                        )}
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-6">
-                    {/* Customer Info */}
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.customer')}</h3>
                         <p className="mt-1 text-sm">{ticket.customer.name}</p>
                     </div>
-                     {/* Agent Info */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.agent')}</h3>
-                        <p className="mt-1 text-sm">{ticket.agent?.name || t('ticketDetails.unassigned')}</p>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.assignee')}</h3>
+                        {isEditing && isPrivilegedUser ? (
+                            <select name="agent" value={editData.agent?.id || ''} onChange={handleAssigneeChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm">
+                                <option value="">{t('ticketDetails.unassigned')}</option>
+                                {technicians.map(tech => <option key={tech.id} value={tech.id}>{tech.name}</option>)}
+                            </select>
+                        ) : (
+                             <p className="mt-1 text-sm">{ticket.agent?.name || t('ticketDetails.unassigned')}</p>
+                        )}
                     </div>
-                     {/* Created Date */}
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.created')}</h3>
                         <p className="mt-1 text-sm">{formatDate(ticket.createdAt)}</p>
                     </div>
-
-                    {/* Category */}
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.category')}</h3>
-                        {isEditing ? (
+                        {isEditing && isPrivilegedUser ? (
                              <select name="category" value={editData.category} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm">
                                 {ticketCategories.map(cat => <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>)}
                             </select>
                         ) : <p className="mt-1 text-sm">{t(`categories.${ticket.category}`)}</p>}
                     </div>
-                    {/* Priority */}
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.priority')}</h3>
-                        {isEditing ? (
+                        {isEditing && isPrivilegedUser ? (
                              <select name="priority" value={editData.priority} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm">
                                 {ticketPriorities.map(prio => <option key={prio} value={prio}>{t(`priorities.${prio}`)}</option>)}
                             </select>
                         ) : <p className="mt-1 text-sm">{t(`priorities.${ticket.priority}`)}</p>}
                     </div>
-                    {/* Last Updated */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.lastUpdated')}</h3>
-                        <p className="mt-1 text-sm">{formatDate(ticket.updatedAt)}</p>
+                     <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('ticketDetails.status')}</h3>
+                         {isEditing && isPrivilegedUser ? (
+                             <select name="status" value={editData.status} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm">
+                                 {ticketStatuses.map(s => <option key={s} value={s}>{t(`statuses.${s}`)}</option>)}
+                             </select>
+                         ) : <p className="mt-1 text-sm">{t(`statuses.${ticket.status}`)}</p>}
                     </div>
                 </div>
 
                 <div className="mt-8">
                     <h2 className="text-lg font-semibold">{t('ticketDetails.description')}</h2>
-                    {isEditing ? (
+                    {isEditing && isPrivilegedUser ? (
                          <textarea name="description" rows={5} value={editData.description} onChange={handleInputChange} className="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm whitespace-pre-wrap"></textarea>
                     ) : (
                         <p className="mt-2 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{ticket.description}</p>
                     )}
                 </div>
 
-                {isEditing && (
+                {isEditing && isPrivilegedUser && (
                     <div className="mt-6 flex justify-end gap-4">
                         <button onClick={handleCancel} className="rounded-md border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600">{t('buttons.cancel')}</button>
-                        <button onClick={handleSave} className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700">Save Changes</button>
+                        <button onClick={handleSave} className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700">{t('buttons.saveChanges')}</button>
                     </div>
                 )}
             </div>
@@ -159,7 +179,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                             </div>
                         </li>
                     ))}
-                     {ticket.comments.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No comments yet.</p>}
+                     {ticket.comments.length === 0 && <p className="text-sm text-gray-500 text-center py-4">{t('ticketDetails.noComments')}</p>}
                 </ul>
                 <div className="mt-6 flex gap-x-3 flex-shrink-0">
                     <img src={currentUser.avatar} alt="" className="h-10 w-10 rounded-full bg-gray-50" />
@@ -168,7 +188,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                             rows={3}
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Add a comment..."
+                            placeholder={t('ticketDetails.addCommentPlaceholder')}
                             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm"
                         ></textarea>
                         <div className="mt-2 flex justify-end">
@@ -176,7 +196,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                                 onClick={handleAddComment}
                                 className="inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500"
                             >
-                                Add Comment
+                                {t('buttons.addComment')}
                             </button>
                         </div>
                     </div>
