@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PlusIcon from './icons/PlusIcon';
 import GlobeAltIcon from './icons/GlobeAltIcon';
 import ChartPieIcon from './icons/ChartPieIcon';
+import UsersIcon from './icons/UsersIcon';
 import UserSwitcher from './UserSwitcher';
 import { useLocalization } from '../context/LocalizationContext';
 import { User, Role } from '../types';
@@ -9,13 +10,12 @@ import { User, Role } from '../types';
 interface HeaderProps {
   onNewTicket: () => void;
   currentUser: User;
-  users: User[];
-  onSetCurrentUser: (user: User) => void;
-  view: 'tickets' | 'dashboard';
-  onSetView: (view: 'tickets' | 'dashboard') => void;
+  onLogout: () => void;
+  view: 'tickets' | 'dashboard' | 'users';
+  onSetView: (view: 'tickets' | 'dashboard' | 'users') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, users, onSetCurrentUser, view, onSetView }) => {
+const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, view, onSetView }) => {
   const { t, setLocale, locale } = useLocalization();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   
@@ -35,22 +35,35 @@ const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, users, onSetC
           >
             {t('header.title')}
           </h1>
-          <UserSwitcher users={users} currentUser={currentUser} onSetCurrentUser={onSetCurrentUser} />
         </div>
         <div className="flex items-center gap-4">
           {currentUser.role === Role.Admin && (
-            <button
-              type="button"
-              onClick={() => onSetView('dashboard')}
-              className={`inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-semibold ${
-                view === 'dashboard'
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
-                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <ChartPieIcon className="h-5 w-5" />
-              {t('header.dashboard')}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onSetView('dashboard')}
+                className={`inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-semibold ${
+                  view === 'dashboard'
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <ChartPieIcon className="h-5 w-5" />
+                {t('header.dashboard')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onSetView('users')}
+                className={`inline-flex items-center gap-x-2 rounded-md px-3 py-2 text-sm font-semibold ${
+                  view === 'users'
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <UsersIcon className="h-5 w-5" />
+                {t('header.manageUsers')}
+              </button>
+            </>
           )}
 
           <div className="relative">
@@ -71,6 +84,7 @@ const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, users, onSetC
               </div>
             )}
           </div>
+          <UserSwitcher currentUser={currentUser} onLogout={onLogout} />
           <button
             type="button"
             onClick={onNewTicket}

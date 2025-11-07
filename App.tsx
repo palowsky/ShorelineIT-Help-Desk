@@ -3,225 +3,276 @@ import Header from './components/Header';
 import TicketList from './components/TicketList';
 import TicketDetails from './components/TicketDetails';
 import NewTicketModal from './components/NewTicketModal';
+import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
-import { Ticket, User, TicketStatus, TicketPriority, TicketCategory, Role } from './types';
-import { useLocalization } from './context/LocalizationContext';
+import UserManagement from './components/UserManagement';
+import { Ticket, User, Role, TicketStatus, TicketPriority, TicketCategory } from './types';
 
 // Mock Data
-const users: { [key: string]: User } = {
-  admin: { id: 'admin-1', name: 'Diana Prince (Admin)', avatar: 'https://i.pravatar.cc/150?u=diana', role: Role.Admin },
-  agent: { id: 'agent-1', name: 'Charlie Brown (Agent)', avatar: 'https://i.pravatar.cc/150?u=charlie', role: Role.Agent },
-  customer1: { id: 'user-1', name: 'Alice Johnson', avatar: 'https://i.pravatar.cc/150?u=alice', role: Role.User },
-  customer2: { id: 'user-2', name: 'Bob Williams', avatar: 'https://i.pravatar.cc/150?u=bob', role: Role.User },
-};
-
-const allUsers = Object.values(users);
-const technicians = allUsers.filter(u => u.role === Role.Admin || u.role === Role.Agent);
+const initialUsers: User[] = [
+  { id: 'user-1', name: 'Alice Admin', username: 'admin', pin: '1234', role: Role.Admin, avatar: 'https://i.pravatar.cc/150?u=alice' },
+  { id: 'user-2', name: 'Bob Agent', username: 'agent', pin: '1234', role: Role.Agent, avatar: 'https://i.pravatar.cc/150?u=bob' },
+  { id: 'user-3', name: 'Charlie Customer', username: 'customer', pin: '1234', role: Role.User, avatar: 'https://i.pravatar.cc/150?u=charlie' },
+  { id: 'user-4', name: 'Diana Agent', username: 'diana', pin: '1234', role: Role.Agent, avatar: 'https://i.pravatar.cc/150?u=diana' },
+];
 
 const initialTickets: Ticket[] = [
   {
     id: 'TICKET-1234',
     subject: 'Cannot connect to the office Wi-Fi',
-    description: 'My laptop is unable to connect to the "Office-Guest" Wi-Fi network. I have tried restarting my machine and forgetting the network, but it still fails to connect. Other devices seem to be working fine.',
-    customer: users.customer1,
-    agent: users.agent,
+    description: 'My laptop is unable to connect to the "Office-Guest" Wi-Fi network. I have tried restarting my machine and forgetting the network, but it still fails to connect. My colleagues in the same area are not experiencing this issue. I need this resolved urgently as I have a client presentation in an hour.',
+    customer: { name: 'Charlie Customer' },
     status: TicketStatus.Open,
     priority: 'High',
     category: 'Network',
-    createdAt: '2023-10-27T10:00:00Z',
-    updatedAt: '2023-10-27T10:05:00Z',
-    comments: [],
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+    agent: initialUsers[1],
+    comments: [
+      { id: 'c1', author: initialUsers[2], content: 'Please help, my Wi-Fi is not working!', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+      { id: 'c2', author: initialUsers[1], content: 'I am looking into this now. Can you please provide your device model?', createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() }
+    ],
     isArchived: false,
   },
   {
     id: 'TICKET-5678',
-    subject: 'Software installation request for "SuperDesign Pro"',
-    description: 'I need to have "SuperDesign Pro" installed on my workstation for a new project. My machine is a Dell Precision Tower 5820. Please let me know if you need any more information.',
-    customer: users.customer2,
-    agent: users.agent,
+    subject: 'Request for new software installation - Adobe Photoshop',
+    description: 'I need to have Adobe Photoshop installed on my workstation for a new project. My project manager has approved this request. Please let me know the process.',
+    customer: { name: 'Diana Agent' }, // An agent can also be a customer
     status: TicketStatus.InProgress,
     priority: 'Medium',
     category: 'Software',
-    createdAt: '2023-10-26T14:30:00Z',
-    updatedAt: '2023-10-27T09:15:00Z',
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    agent: initialUsers[0],
     comments: [],
     isArchived: false,
   },
-    {
-    id: 'TICKET-9101',
-    subject: 'Printer is out of toner',
-    description: 'The main office printer on the 3rd floor is displaying a "Toner Low" message and is refusing to print. We need a replacement toner cartridge for model X-5500.',
-    customer: users.customer1,
-    status: TicketStatus.Open,
+  {
+    id: 'TICKET-1011',
+    subject: 'Printer is not working',
+    description: 'The main office printer on the 2nd floor is out of toner. Can someone please replace it?',
+    customer: { name: 'Charlie Customer' },
+    status: TicketStatus.Resolved,
     priority: 'Low',
     category: 'Hardware',
-    createdAt: '2023-10-28T11:00:00Z',
-    updatedAt: '2023-10-28T11:00:00Z',
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    agent: initialUsers[1],
     comments: [],
-    isArchived: false,
+    isArchived: true,
   },
 ];
 
 
-function App() {
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
-  const [currentUser, setCurrentUser] = useState<User>(users.admin);
-  const [showArchived, setShowArchived] = useState(false);
-  const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
-  const [view, setView] = useState<'tickets' | 'dashboard'>('tickets');
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null);
-  const { t } = useLocalization();
-  
-  const addTicket = (ticketData: {
-      subject: string;
-      description: string;
-      customerName: string;
-      customerEmail: string;
-      priority: TicketPriority;
-      category: TicketCategory;
-  }) => {
-    const newCustomer: User = (currentUser.role === Role.User) ? currentUser : {
-      id: `user-${Date.now()}`,
-      name: ticketData.customerName,
-      avatar: `https://i.pravatar.cc/150?u=${ticketData.customerEmail}`,
-      role: Role.User,
+const App: React.FC = () => {
+    const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
+    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+    const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
+    const [view, setView] = useState<'tickets' | 'dashboard' | 'users'>('tickets');
+    const [showArchived, setShowArchived] = useState(false);
+    const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null);
+    
+    const filteredTickets = useMemo(() => {
+        let displayTickets = tickets;
+
+        if (currentUser?.role === Role.User) {
+            displayTickets = tickets.filter(t => t.customer.name === currentUser.name);
+        }
+
+        displayTickets = displayTickets.filter(t => t.isArchived === showArchived);
+
+        if (showUnassignedOnly) {
+            displayTickets = displayTickets.filter(t => !t.agent);
+        }
+        
+        if (activeFilter) {
+            displayTickets = displayTickets.filter(t => (t as any)[activeFilter.type] === activeFilter.value);
+        }
+
+        return displayTickets.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }, [tickets, currentUser, showArchived, showUnassignedOnly, activeFilter]);
+
+    useEffect(() => {
+        if (currentUser && filteredTickets.length > 0) {
+            if (!selectedTicketId || !filteredTickets.find(t => t.id === selectedTicketId)) {
+                setSelectedTicketId(filteredTickets[0].id);
+            }
+        } else {
+            setSelectedTicketId(null);
+        }
+    }, [currentUser, filteredTickets, selectedTicketId]);
+
+    const handleLogin = (username: string, pin: string): boolean => {
+        const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.pin === pin);
+        if (user) {
+            setCurrentUser(user);
+            return true;
+        }
+        return false;
     };
-    
-    const newTicket: Ticket = {
-      id: `TICKET-${Math.floor(Math.random() * 10000)}`,
-      subject: ticketData.subject,
-      description: ticketData.description,
-      customer: newCustomer,
-      status: TicketStatus.Open,
-      priority: ticketData.priority,
-      category: ticketData.category,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      comments: [],
-      isArchived: false,
-    };
-    setTickets(prevTickets => [newTicket, ...prevTickets]);
-  };
 
-  const updateTicket = (updatedTicket: Ticket) => {
-    const ticketWithTimestamp = { ...updatedTicket, updatedAt: new Date().toISOString() };
-    setTickets(prevTickets =>
-      prevTickets.map(ticket =>
-        ticket.id === ticketWithTimestamp.id ? ticketWithTimestamp : ticket
-      )
-    );
-
-    if (selectedTicket && selectedTicket.id === ticketWithTimestamp.id) {
-        setSelectedTicket(ticketWithTimestamp);
-    }
-  };
-  
-  const handleFilterFromDashboard = (type: 'priority' | 'category' | 'status', value: string) => {
-    setActiveFilter({ type, value });
-    setView('tickets');
-  };
-  
-  const handleClearFilter = () => {
-    setActiveFilter(null);
-  };
-
-  const displayedTickets = useMemo(() => {
-    const ticketsForRole = currentUser.role === Role.User
-        ? tickets.filter(ticket => ticket.customer.id === currentUser.id)
-        : tickets;
-    
-    let filteredTickets = ticketsForRole.filter(ticket => !!ticket.isArchived === showArchived);
-
-    if (showUnassignedOnly) {
-        filteredTickets = filteredTickets.filter(ticket => !ticket.agent);
-    }
-    
-    if (activeFilter) {
-      filteredTickets = filteredTickets.filter(ticket => {
-        const key = activeFilter.type as keyof Ticket;
-        // FIX: Corrected typo from 'activeiver' to 'activeFilter'.
-        return ticket[key] === activeFilter.value;
-      });
-    }
-
-
-    return filteredTickets;
-  }, [tickets, currentUser, showArchived, showUnassignedOnly, activeFilter]);
-
-  useEffect(() => {
-    if (selectedTicket && !displayedTickets.find(t => t.id === selectedTicket.id)) {
-        setSelectedTicket(displayedTickets[0] || null);
-    } else if (!selectedTicket && displayedTickets.length > 0) {
-        setSelectedTicket(displayedTickets[0]);
-    }
-  }, [displayedTickets, selectedTicket]);
-  
-  useEffect(() => {
-    if (currentUser.role !== Role.Admin && view === 'dashboard') {
+    const handleLogout = () => {
+        setCurrentUser(null);
+        setSelectedTicketId(null);
         setView('tickets');
-    }
-    setSelectedTicket(displayedTickets[0] || null);
-    setActiveFilter(null); // Clear filters when switching user
-  }, [currentUser]);
+    };
 
-  return (
-    <div className="flex h-screen flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <Header
-        onNewTicket={() => setIsModalOpen(true)}
-        currentUser={currentUser}
-        users={allUsers}
-        onSetCurrentUser={setCurrentUser}
-        view={view}
-        onSetView={setView}
-      />
-      <div className="flex flex-grow overflow-hidden">
-        {view === 'dashboard' && currentUser.role === Role.Admin ? (
-            <Dashboard tickets={tickets} onApplyFilter={handleFilterFromDashboard}/>
-        ) : (
-            <>
-                <div className="w-1/3 flex-shrink-0 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
-                    <TicketList
-                        tickets={displayedTickets}
-                        selectedTicketId={selectedTicket?.id}
-                        onSelectTicket={setSelectedTicket}
-                        showArchived={showArchived}
-                        onSetShowArchived={setShowArchived}
-                        currentUser={currentUser}
-                        showUnassignedOnly={showUnassignedOnly}
-                        onSetShowUnassignedOnly={setShowUnassignedOnly}
-                        activeFilter={activeFilter}
-                        onClearFilter={handleClearFilter}
-                    />
-                </div>
-                <div className="flex-grow overflow-y-auto">
-                    {selectedTicket ? (
-                        <TicketDetails
-                            key={selectedTicket.id}
-                            ticket={selectedTicket}
-                            currentUser={currentUser}
-                            onUpdateTicket={updateTicket}
-                            technicians={technicians}
-                        />
-                    ) : (
-                        <div className="flex h-full items-center justify-center">
-                            <p className="text-gray-500">{t('dashboard.selectTicket')}</p>
-                        </div>
-                    )}
-                </div>
-            </>
-        )}
-      </div>
-      {isModalOpen && (
-        <NewTicketModal
-          onClose={() => setIsModalOpen(false)}
-          onAddTicket={addTicket}
-          currentUser={currentUser}
-        />
-      )}
-    </div>
-  );
-}
+    const handleSelectTicket = (ticket: Ticket) => {
+        setSelectedTicketId(ticket.id);
+    };
+
+    const handleUpdateTicket = (updatedTicket: Ticket) => {
+        const newTickets = tickets.map(t => t.id === updatedTicket.id ? { ...updatedTicket, updatedAt: new Date().toISOString() } : t);
+        setTickets(newTickets);
+    };
+
+    const handleAddTicket = (newTicketData: {
+        subject: string;
+        description: string;
+        customerName: string;
+        priority: TicketPriority;
+        category: TicketCategory;
+    }) => {
+        if (!currentUser) return;
+
+        const customerAsUser: User = users.find(u => u.name === newTicketData.customerName) || {
+            id: `user-guest-${Date.now()}`,
+            name: newTicketData.customerName,
+            username: newTicketData.customerName.toLowerCase().replace(/\s/g, ''),
+            pin: '',
+            role: Role.User,
+            avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(newTicketData.customerName)}`
+        };
+
+        const newTicket: Ticket = {
+            id: `TICKET-${Math.floor(Math.random() * 10000)}`,
+            subject: newTicketData.subject,
+            description: newTicketData.description,
+            customer: { name: newTicketData.customerName },
+            status: TicketStatus.Open,
+            priority: newTicketData.priority,
+            category: newTicketData.category,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            comments: [{
+                id: `comment-${Date.now()}`,
+                author: customerAsUser,
+                content: newTicketData.description,
+                createdAt: new Date().toISOString(),
+            }],
+            isArchived: false,
+        };
+        setTickets([newTicket, ...tickets]);
+    };
+    
+    const handleApplyFilter = (type: string, value: string) => {
+        setActiveFilter({ type, value });
+        setView('tickets');
+    };
+
+    const handleClearFilter = () => {
+        setActiveFilter(null);
+    };
+
+    const handleUpdateUser = (updatedUser: User) => {
+        setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+        if (currentUser && currentUser.id === updatedUser.id) {
+            setCurrentUser(updatedUser);
+        }
+    };
+
+    const handleDeleteUser = (userId: string) => {
+        setUsers(users.filter(u => u.id !== userId));
+    };
+
+    const handleCreateUser = (name: string, username: string, role: Role, pin: string) => {
+        const newUser: User = {
+            id: `user-${Date.now()}`,
+            name,
+            username,
+            pin,
+            role,
+            avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(username)}`,
+        };
+        setUsers([newUser, ...users]);
+    };
+
+    const selectedTicket = useMemo(() => {
+        return tickets.find(ticket => ticket.id === selectedTicketId);
+    }, [tickets, selectedTicketId]);
+    
+    const technicians = useMemo(() => {
+        return users.filter(u => u.role === Role.Admin || u.role === Role.Agent);
+    }, [users]);
+
+    if (!currentUser) {
+        return <LoginScreen onLogin={handleLogin} />;
+    }
+
+    return (
+        <div className="h-screen w-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+            <Header
+                onNewTicket={() => setIsNewTicketModalOpen(true)}
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                view={view}
+                onSetView={setView}
+            />
+            <main className="flex-grow flex min-h-0">
+                {view === 'tickets' && (
+                    <>
+                        <aside className="w-full md:w-1/3 min-w-[300px] max-w-[450px] border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
+                            <TicketList
+                                tickets={filteredTickets}
+                                selectedTicketId={selectedTicketId}
+                                onSelectTicket={handleSelectTicket}
+                                showArchived={showArchived}
+                                onSetShowArchived={setShowArchived}
+                                currentUser={currentUser}
+                                showUnassignedOnly={showUnassignedOnly}
+                                onSetShowUnassignedOnly={setShowUnassignedOnly}
+                                activeFilter={activeFilter}
+                                onClearFilter={handleClearFilter}
+                            />
+                        </aside>
+                        <section className="hidden md:flex flex-col flex-grow">
+                            {selectedTicket ? (
+                                <TicketDetails
+                                    ticket={selectedTicket}
+                                    currentUser={currentUser}
+                                    onUpdateTicket={handleUpdateTicket}
+                                    technicians={technicians}
+                                />
+                            ) : (
+                                <div className="flex h-full items-center justify-center text-gray-500">
+                                    <p>Select a ticket to view details</p>
+                                </div>
+                            )}
+                        </section>
+                    </>
+                )}
+                {view === 'dashboard' && <Dashboard tickets={tickets} onApplyFilter={handleApplyFilter} />}
+                {view === 'users' && <UserManagement 
+                    users={users}
+                    currentUser={currentUser}
+                    onUpdateUser={handleUpdateUser}
+                    onDeleteUser={handleDeleteUser}
+                    onCreateUser={handleCreateUser}
+                 />}
+            </main>
+            {isNewTicketModalOpen && (
+                <NewTicketModal
+                    onClose={() => setIsNewTicketModalOpen(false)}
+                    onAddTicket={handleAddTicket}
+                    currentUser={currentUser}
+                />
+            )}
+        </div>
+    );
+};
 
 export default App;

@@ -28,10 +28,10 @@ const TicketItem: React.FC<TicketItemProps> = ({ ticket, isSelected, onSelect })
   return (
     <li
       onClick={onSelect}
-      className={`group flex cursor-pointer items-center justify-between p-4 transition-all duration-200 ease-in-out ${
+      className={`group flex cursor-pointer items-center justify-between p-4 transition-colors duration-150 ease-in-out ${
         isSelected
-          ? 'border-l-4 border-primary-500 bg-primary-100 dark:bg-primary-900/50'
-          : 'border-l-4 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50'
+          ? 'border-l-4 border-primary-500 bg-primary-100 dark:bg-primary-900/50 hover:bg-primary-200 dark:hover:bg-primary-800'
+          : 'border-l-4 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
       } ${isArchived ? 'opacity-70' : ''}`}
     >
       <div className="min-w-0 flex-grow pr-4">

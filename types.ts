@@ -1,4 +1,18 @@
-import { User as User_1 } from "./types";
+export enum Role {
+  Admin = 'Admin',
+  Agent = 'Agent',
+  User = 'User',
+}
+
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  pin: string;
+  role: Role;
+  avatar: string;
+}
+
 export enum TicketStatus {
   Open = 'Open',
   InProgress = 'In Progress',
@@ -6,40 +20,32 @@ export enum TicketStatus {
   Closed = 'Closed',
 }
 
-export enum Role {
-  Admin = 'Admin',
-  Agent = 'Agent',
-  User = 'User',
-}
-
-export type TicketCategory = 'Hardware' | 'Software' | 'Network' | 'Account' | 'Other';
 export type TicketPriority = 'Low' | 'Medium' | 'High' | 'Critical';
 
-export interface User {
-  id: string;
-  name: string;
-  avatar: string; // URL to avatar image
-  role: Role;
-}
+export type TicketCategory = 'Hardware' | 'Software' | 'Network' | 'Account' | 'Other';
 
 export interface Comment {
   id: string;
   author: User;
   content: string;
-  createdAt: string; // ISO date string
+  createdAt: string;
+}
+
+export interface Customer {
+    name: string;
 }
 
 export interface Ticket {
   id: string;
   subject: string;
   description: string;
-  customer: User;
-  agent?: User;
+  customer: Customer;
   status: TicketStatus;
   priority: TicketPriority;
   category: TicketCategory;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  createdAt: string;
+  updatedAt: string;
+  agent?: User;
   comments: Comment[];
-  isArchived?: boolean;
+  isArchived: boolean;
 }

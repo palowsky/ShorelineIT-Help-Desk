@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
 import { User, Role } from '../types';
-import UserCircleIcon from './icons/UserCircleIcon';
 import { useLocalization } from '../context/LocalizationContext';
+import ArrowRightOnRectangleIcon from './icons/ArrowRightOnRectangleIcon';
 
 interface UserSwitcherProps {
     currentUser: User;
-    users: User[];
-    onSetCurrentUser: (user: User) => void;
+    onLogout: () => void;
 }
 
-const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, users, onSetCurrentUser }) => {
+const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout }) => {
     const { t } = useLocalization();
     const [isOpen, setIsOpen] = useState(false);
-
-    const handleSelectUser = (user: User) => {
-        onSetCurrentUser(user);
-        setIsOpen(false);
-    }
 
     const getRoleName = (role: Role) => {
         switch(role) {
@@ -37,21 +31,15 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, users, onSetCu
                 </div>
             </button>
             {isOpen && (
-                 <div className="absolute left-0 mt-2 w-56 origin-top-left rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                 <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                     <div className="py-1">
-                        {users.map(user => (
-                             <button
-                                key={user.id}
-                                onClick={() => handleSelectUser(user)}
-                                className="flex w-full items-center gap-x-3 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                                <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full" />
-                                <div>
-                                    <p className="font-semibold">{user.name}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{getRoleName(user.role)}</p>
-                                </div>
-                            </button>
-                        ))}
+                        <button
+                            onClick={onLogout}
+                            className="flex w-full items-center gap-x-3 px-4 py-2 text-left text-sm text-red-700 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                            <span>{t('header.logout')}</span>
+                        </button>
                     </div>
                  </div>
             )}

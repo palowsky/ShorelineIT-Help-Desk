@@ -12,7 +12,6 @@ interface NewTicketModalProps {
     subject: string;
     description: string;
     customerName: string;
-    customerEmail: string;
     priority: TicketPriority;
     category: TicketCategory;
   }) => void;
@@ -26,7 +25,6 @@ const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket, c
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
   const [category, setCategory] = useState<TicketCategory>('Other');
   const [priority, setPriority] = useState<TicketPriority>('Medium');
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -37,8 +35,6 @@ const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket, c
   useEffect(() => {
     if (isCustomer) {
       setCustomerName(currentUser.name);
-      // Assuming email can be derived or is stored, otherwise use a placeholder
-      setCustomerEmail(`${currentUser.name.split(' ')[0].toLowerCase()}@example.com`);
     }
   }, [currentUser, isCustomer]);
 
@@ -67,11 +63,11 @@ const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket, c
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!subject || !description || !customerName || !customerEmail) {
+    if (!subject || !description || !customerName) {
         setError(t('newTicketModal.errorRequiredFields'));
         return;
     }
-    onAddTicket({ subject, description, customerName, customerEmail, category, priority });
+    onAddTicket({ subject, description, customerName, category, priority });
     onClose();
   };
 
@@ -86,15 +82,9 @@ const NewTicketModal: React.FC<NewTicketModalProps> = ({ onClose, onAddTicket, c
             </button>
           </div>
           <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-                <div>
-                    <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newTicketModal.customerName')}</label>
-                    <input type="text" name="customerName" id="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} required disabled={isCustomer} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700 sm:text-sm"/>
-                </div>
-                <div>
-                    <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newTicketModal.customerEmail')}</label>
-                    <input type="email" name="customerEmail" id="customerEmail" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} required disabled={isCustomer} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700 sm:text-sm"/>
-                </div>
+            <div>
+                <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newTicketModal.customerName')}</label>
+                <input type="text" name="customerName" id="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} required disabled={isCustomer} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700 sm:text-sm"/>
             </div>
             <div>
               <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('newTicketModal.subject')}</label>

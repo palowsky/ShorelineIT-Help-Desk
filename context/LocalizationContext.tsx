@@ -1,258 +1,229 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
-// By embedding the JSON content directly, we bypass any module resolution issues
-// with the browser's native ES module loader for JSON files.
-const en = {
-  "header": {
-    "title": "Support Desk",
-    "newTicket": "New Ticket",
-    "dashboard": "Dashboard"
+type Locale = 'en' | 'es';
+
+const translations: Record<Locale, Record<string, string>> = {
+  en: {
+    'header.title': 'Help Desk',
+    'header.dashboard': 'Dashboard',
+    'header.manageUsers': 'Manage Users',
+    'header.newTicket': 'New Ticket',
+    'header.logout': 'Logout',
+    'ticketList.archivedTitle': 'Archived Tickets',
+    'ticketList.title': 'All Tickets',
+    'ticketList.showArchived': 'Show archived tickets',
+    'ticketList.showUnassigned': 'Show unassigned only',
+    'ticketList.filterTypes.priority': 'Priority',
+    'ticketList.filterTypes.category': 'Category',
+    'ticketList.filterTypes.status': 'Status',
+    'ticketList.clearFilter': 'Clear',
+    'ticketList.noTickets': 'No tickets found.',
+    'ticket.archived': 'Archived',
+    'ticketDetails.customer': 'Customer',
+    'ticketDetails.assignee': 'Assignee',
+    'ticketDetails.unassigned': 'Unassigned',
+    'ticketDetails.created': 'Created On',
+    'ticketDetails.category': 'Category',
+    'ticketDetails.priority': 'Priority',
+    'ticketDetails.status': 'Status',
+    'ticketDetails.description': 'Description',
+    'ticketDetails.conversation': 'Conversation',
+    'ticketDetails.noComments': 'No comments yet.',
+    'ticketDetails.addCommentPlaceholder': 'Add a comment...',
+    'buttons.archive': 'Archive',
+    'buttons.unarchive': 'Unarchive',
+    'buttons.edit': 'Edit',
+    'buttons.cancel': 'Cancel',
+    'buttons.saveChanges': 'Save Changes',
+    'buttons.addComment': 'Add Comment',
+    'buttons.createTicket': 'Create Ticket',
+    'newTicketModal.title': 'Create New Ticket',
+    'newTicketModal.customerName': "Customer's Name",
+    'newTicketModal.subject': 'Subject',
+    'newTicketModal.description': 'Description',
+    'newTicketModal.category': 'Category',
+    'newTicketModal.priority': 'Priority',
+    'newTicketModal.suggesting': 'Suggesting...',
+    'newTicketModal.aiSuggest': 'AI Suggest',
+    'newTicketModal.errorDescription': 'Please enter a description to use AI suggestions.',
+    'newTicketModal.errorAISuggest': 'Failed to get suggestions from AI.',
+    'newTicketModal.errorRequiredFields': 'Please fill out all required fields.',
+    'dashboard.title': 'Dashboard',
+    'dashboard.totalTickets': 'Total Tickets',
+    'dashboard.openTickets': 'Open',
+    'dashboard.inProgressTickets': 'In Progress',
+    'dashboard.resolvedTickets': 'Resolved',
+    'dashboard.byPriority': 'Tickets by Priority',
+    'dashboard.byCategory': 'Tickets by Category',
+    'dashboard.noData': 'No data available',
+    'roles.Admin': 'Admin',
+    'roles.Agent': 'Agent',
+    'roles.User': 'User',
+    'statuses.Open': 'Open',
+    'statuses.In Progress': 'In Progress',
+    'statuses.Resolved': 'Resolved',
+    'statuses.Closed': 'Closed',
+    'priorities.Low': 'Low',
+    'priorities.Medium': 'Medium',
+    'priorities.High': 'High',
+    'priorities.Critical': 'Critical',
+    'categories.Hardware': 'Hardware',
+    'categories.Software': 'Software',
+    'categories.Network': 'Network',
+    'categories.Account': 'Account',
+    'categories.Other': 'Other',
+    'login.title': 'Sign in to your account',
+    'login.username': 'Username',
+    'login.password': 'Password',
+    'login.signIn': 'Sign in',
+    'login.error': 'Invalid credentials. Please try again.',
+    'users.title': 'User Management',
+    'users.addUser': 'Add User',
+    'users.name': 'Name',
+    'users.role': 'Role',
+    'users.actions': 'Actions',
+    'users.resetPin': 'Reset PIN',
+    'users.delete': 'Delete',
+    'users.confirmDelete': 'Are you sure you want to delete this user?',
+    'userModal.createUserTitle': 'Create New User',
+    'userModal.resetPinTitle': 'Reset PIN for',
+    'userModal.nameLabel': 'Full Name',
+    'userModal.usernameLabel': 'Username',
+    'userModal.roleLabel': 'Role',
+    'userModal.pinLabel': 'New 4-Digit PIN',
+    'userModal.saveUser': 'Save User',
+    'userModal.updatePin': 'Update PIN',
+    'userModal.errorPinFormat': 'PIN must be 4 digits.',
+    'userModal.errorRequired': 'This field is required.',
   },
-  "ticketList": {
-    "title": "All Tickets",
-    "archivedTitle": "Archived Tickets",
-    "showArchived": "Show Archived",
-    "showUnassigned": "Show Unassigned Only",
-    "noTickets": "No tickets found.",
-    "filterTypes": {
-      "status": "Status",
-      "priority": "Priority",
-      "category": "Category"
-    },
-    "filteringBy": "Filtering by {type}: {value}",
-    "clearFilter": "Clear"
-  },
-  "ticketDetails": {
-    "customer": "Customer",
-    "agent": "Agent",
-    "assignee": "Assignee",
-    "unassigned": "Unassigned",
-    "created": "Created",
-    "category": "Category",
-    "priority": "Priority",
-    "status": "Status",
-    "lastUpdated": "Last Updated",
-    "description": "Description",
-    "conversation": "Conversation",
-    "noComments": "No comments yet.",
-    "addCommentPlaceholder": "Add a comment..."
-  },
-  "ticket": {
-    "archived": "Archived"
-  },
-  "newTicketModal": {
-    "title": "New Support Ticket",
-    "customerName": "Customer Name",
-    "customerEmail": "Customer Email",
-    "subject": "Subject",
-    "description": "Description",
-    "category": "Category",
-    "priority": "Priority",
-    "aiSuggest": "AI Suggest",
-    "suggesting": "Suggesting...",
-    "errorDescription": "Please enter a description to get suggestions.",
-    "errorAISuggest": "Could not get AI suggestions. Please select manually.",
-    "errorRequiredFields": "Please fill all required fields."
-  },
-  "dashboard": {
-    "title": "Reports Dashboard",
-    "selectTicket": "Select a ticket to view details",
-    "totalTickets": "Total Tickets",
-    "openTickets": "Open",
-    "inProgressTickets": "In Progress",
-    "resolvedTickets": "Resolved",
-    "byPriority": "Tickets by Priority",
-    "byCategory": "Tickets by Category",
-    "noData": "No data available."
-  },
-  "roles": {
-    "admin": "Admin",
-    "agent": "Agent",
-    "user": "User"
-  },
-  "buttons": {
-    "cancel": "Cancel",
-    "createTicket": "Create Ticket",
-    "saveChanges": "Save Changes",
-    "addComment": "Add Comment",
-    "archive": "Archive",
-    "unarchive": "Unarchive",
-    "edit": "Edit"
-  },
-  "statuses": {
-    "Open": "Open",
-    "In Progress": "In Progress",
-    "Resolved": "Resolved",
-    "Closed": "Closed"
-  },
-  "categories": {
-    "Hardware": "Hardware",
-    "Software": "Software",
-    "Network": "Network",
-    "Account": "Account",
-    "Other": "Other"
-  },
-  "priorities": {
-    "Low": "Low",
-    "Medium": "Medium",
-    "High": "High",
-    "Critical": "Critical"
+  es: {
+    'header.title': 'Mesa de Ayuda',
+    'header.dashboard': 'Panel',
+    'header.manageUsers': 'Administrar Usuarios',
+    'header.newTicket': 'Nuevo Ticket',
+    'header.logout': 'Cerrar Sesión',
+    'ticketList.archivedTitle': 'Tickets Archivados',
+    'ticketList.title': 'Todos los Tickets',
+    'ticketList.showArchived': 'Mostrar tickets archivados',
+    'ticketList.showUnassigned': 'Mostrar solo sin asignar',
+    'ticketList.filterTypes.priority': 'Prioridad',
+    'ticketList.filterTypes.category': 'Categoría',
+    'ticketList.filterTypes.status': 'Estado',
+    'ticketList.clearFilter': 'Limpiar',
+    'ticketList.noTickets': 'No se encontraron tickets.',
+    'ticket.archived': 'Archivado',
+    'ticketDetails.customer': 'Cliente',
+    'ticketDetails.assignee': 'Asignado a',
+    'ticketDetails.unassigned': 'Sin asignar',
+    'ticketDetails.created': 'Creado el',
+    'ticketDetails.category': 'Categoría',
+    'ticketDetails.priority': 'Prioridad',
+    'ticketDetails.status': 'Estado',
+    'ticketDetails.description': 'Descripción',
+    'ticketDetails.conversation': 'Conversación',
+    'ticketDetails.noComments': 'Aún no hay comentarios.',
+    'ticketDetails.addCommentPlaceholder': 'Añadir un comentario...',
+    'buttons.archive': 'Archivar',
+    'buttons.unarchive': 'Desarchivar',
+    'buttons.edit': 'Editar',
+    'buttons.cancel': 'Cancelar',
+    'buttons.saveChanges': 'Guardar Cambios',
+    'buttons.addComment': 'Añadir Comentario',
+    'buttons.createTicket': 'Crear Ticket',
+    'newTicketModal.title': 'Crear Nuevo Ticket',
+    'newTicketModal.customerName': 'Nombre del Cliente',
+    'newTicketModal.subject': 'Asunto',
+    'newTicketModal.description': 'Descripción',
+    'newTicketModal.category': 'Categoría',
+    'newTicketModal.priority': 'Prioridad',
+    'newTicketModal.suggesting': 'Sugiriendo...',
+    'newTicketModal.aiSuggest': 'Sugerencia de IA',
+    'newTicketModal.errorDescription': 'Por favor ingrese una descripción para usar las sugerencias de IA.',
+    'newTicketModal.errorAISuggest': 'Error al obtener sugerencias de la IA.',
+    'newTicketModal.errorRequiredFields': 'Por favor, rellene todos los campos obligatorios.',
+    'dashboard.title': 'Panel',
+    'dashboard.totalTickets': 'Tickets Totales',
+    'dashboard.openTickets': 'Abiertos',
+    'dashboard.inProgressTickets': 'En Progreso',
+    'dashboard.resolvedTickets': 'Resueltos',
+    'dashboard.byPriority': 'Tickets por Prioridad',
+    'dashboard.byCategory': 'Tickets por Categoría',
+    'dashboard.noData': 'No hay datos disponibles',
+    'roles.Admin': 'Administrador',
+    'roles.Agent': 'Agente',
+    'roles.User': 'Usuario',
+    'statuses.Open': 'Abierto',
+    'statuses.In Progress': 'En Progreso',
+    'statuses.Resolved': 'Resuelto',
+    'statuses.Closed': 'Cerrado',
+    'priorities.Low': 'Baja',
+    'priorities.Medium': 'Media',
+    'priorities.High': 'Alta',
+    'priorities.Critical': 'Crítica',
+    'categories.Hardware': 'Hardware',
+    'categories.Software': 'Software',
+    'categories.Network': 'Red',
+    'categories.Account': 'Cuenta',
+    'categories.Other': 'Otro',
+    'login.title': 'Inicia sesión en tu cuenta',
+    'login.username': 'Nombre de usuario',
+    'login.password': 'Contraseña',
+    'login.signIn': 'Iniciar Sesión',
+    'login.error': 'Credenciales inválidas. Por favor, inténtelo de nuevo.',
+    'users.title': 'Gestión de Usuarios',
+    'users.addUser': 'Añadir Usuario',
+    'users.name': 'Nombre',
+    'users.role': 'Rol',
+    'users.actions': 'Acciones',
+    'users.resetPin': 'Restablecer PIN',
+    'users.delete': 'Eliminar',
+    'users.confirmDelete': '¿Estás seguro de que quieres eliminar a este usuario?',
+    'userModal.createUserTitle': 'Crear Nuevo Usuario',
+    'userModal.resetPinTitle': 'Restablecer PIN para',
+    'userModal.nameLabel': 'Nombre Completo',
+    'userModal.usernameLabel': 'Nombre de Usuario',
+    'userModal.roleLabel': 'Rol',
+    'userModal.pinLabel': 'Nuevo PIN de 4 dígitos',
+    'userModal.saveUser': 'Guardar Usuario',
+    'userModal.updatePin': 'Actualizar PIN',
+    'userModal.errorPinFormat': 'El PIN debe tener 4 dígitos.',
+    'userModal.errorRequired': 'Este campo es obligatorio.',
   }
 };
 
-const es = {
-  "header": {
-    "title": "Mesa de Ayuda",
-    "newTicket": "Nuevo Ticket",
-    "dashboard": "Tablero"
-  },
-  "ticketList": {
-    "title": "Todos los Tickets",
-    "archivedTitle": "Tickets Archivados",
-    "showArchived": "Mostrar Archivados",
-    "showUnassigned": "Mostrar Solo Sin Asignar",
-    "noTickets": "No se encontraron tickets.",
-    "filterTypes": {
-      "status": "Estado",
-      "priority": "Prioridad",
-      "category": "Categoría"
-    },
-    "filteringBy": "Filtrando por {type}: {value}",
-    "clearFilter": "Quitar"
-  },
-  "ticketDetails": {
-    "customer": "Cliente",
-    "agent": "Agente",
-    "assignee": "Asignado a",
-    "unassigned": "Sin Asignar",
-    "created": "Creado",
-    "category": "Categoría",
-    "priority": "Prioridad",
-    "status": "Estado",
-    "lastUpdated": "Última Actualización",
-    "description": "Descripción",
-    "conversation": "Conversación",
-    "noComments": "Aún no hay comentarios.",
-    "addCommentPlaceholder": "Añadir un comentario..."
-  },
-  "ticket": {
-    "archived": "Archivado"
-  },
-  "newTicketModal": {
-    "title": "Nuevo Ticket de Soporte",
-    "customerName": "Nombre del Cliente",
-    "customerEmail": "Email del Cliente",
-    "subject": "Asunto",
-    "description": "Descripción",
-    "category": "Categoría",
-    "priority": "Prioridad",
-    "aiSuggest": "Sugerencia IA",
-    "suggesting": "Sugiriendo...",
-    "errorDescription": "Por favor, ingrese una descripción para obtener sugerencias.",
-    "errorAISuggest": "No se pudieron obtener sugerencias de la IA. Por favor, seleccione manually.",
-    "errorRequiredFields": "Por favor, complete todos los campos obligatorios."
-  },
-  "dashboard": {
-    "title": "Tablero de Reportes",
-    "selectTicket": "Seleccione un ticket para ver los detalles",
-    "totalTickets": "Tickets Totales",
-    "openTickets": "Abiertos",
-    "inProgressTickets": "En Progreso",
-    "resolvedTickets": "Resueltos",
-    "byPriority": "Tickets por Prioridad",
-    "byCategory": "Tickets por Categoría",
-    "noData": "No hay datos disponibles."
-  },
-  "roles": {
-    "admin": "Administrador",
-    "agent": "Agente",
-    "user": "Usuario"
-  },
-  "buttons": {
-    "cancel": "Cancelar",
-    "createTicket": "Crear Ticket",
-    "saveChanges": "Guardar Cambios",
-    "addComment": "Añadir Comentario",
-    "archive": "Archivar",
-    "unarchive": "Desarchivar",
-    "edit": "Editar"
-  },
-  "statuses": {
-    "Open": "Abierto",
-    "In Progress": "En Progreso",
-    "Resolved": "Resuelto",
-    "Closed": "Cerrado"
-  },
-  "categories": {
-    "Hardware": "Hardware",
-    "Software": "Software",
-    "Network": "Red",
-    "Account": "Cuenta",
-    "Other": "Otro"
-  },
-  "priorities": {
-    "Low": "Baja",
-    "Medium": "Media",
-    "High": "Alta",
-    "Critical": "Crítica"
-  }
-};
-
-
-type Translations = typeof en;
-
-const translations: { [key: string]: Translations } = {
-  en,
-  es,
-};
 
 interface LocalizationContextType {
-  locale: 'en' | 'es';
-  setLocale: (locale: 'en' | 'es') => void;
-  t: (key: string, fallbackOrReplacements?: string | { [key: string]: string }) => string;
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  t: (key: string, fallback?: string) => string;
 }
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
 
-export const LocalizationProvider = ({ children }: { children: ReactNode }) => {
-    const [locale, setLocale] = useState<'en' | 'es'>('en');
+export const LocalizationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [locale, setLocale] = useState<Locale>('en');
 
-    const t = (key: string, fallbackOrReplacements?: string | { [key: string]: string }): string => {
-        const keys = key.split('.');
-        let result: any = translations[locale];
-        for (const k of keys) {
-            result = result?.[k];
-            if (result === undefined) {
-                let fallbackResult: any = translations['en'];
-                for (const fk of keys) {
-                    fallbackResult = fallbackResult?.[fk];
-                }
-                result = fallbackResult;
-                break;
-            }
-        }
+  const t = useCallback((key: string, fallback?: string): string => {
+    return translations[locale][key] || translations['en'][key] || fallback || key;
+  }, [locale]);
 
-        let finalString = result || (typeof fallbackOrReplacements === 'string' ? fallbackOrReplacements : key);
+  const contextValue = {
+    locale,
+    setLocale,
+    t,
+  };
 
-        if (typeof fallbackOrReplacements === 'object') {
-            Object.entries(fallbackOrReplacements).forEach(([rKey, rValue]) => {
-                finalString = finalString.replace(`{${rKey}}`, rValue);
-            });
-        }
-        
-        return finalString;
-    };
-
-    return (
-        <LocalizationContext.Provider value={{ locale, setLocale, t }}>
-            {children}
-        </LocalizationContext.Provider>
-    );
+  return (
+    <LocalizationContext.Provider value={contextValue}>
+      {children}
+    {/* FIX: Corrected typo in closing tag from Localization-Provider to LocalizationContext.Provider */}
+    </LocalizationContext.Provider>
+  );
 };
 
-export const useLocalization = (): LocalizationContextType => {
+export const useLocalization = () => {
   const context = useContext(LocalizationContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useLocalization must be used within a LocalizationProvider');
   }
   return context;
