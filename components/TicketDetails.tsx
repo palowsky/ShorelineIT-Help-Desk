@@ -16,6 +16,7 @@ interface TicketDetailsProps {
 const ticketStatuses = Object.values(TicketStatus);
 const ticketCategories: TicketCategory[] = ['Hardware', 'Software', 'Network', 'Account', 'Other'];
 const ticketPriorities: TicketPriority[] = ['Low', 'Medium', 'High', 'Critical'];
+const DEFAULT_AVATAR_URL = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
 const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUpdateTicket, technicians }) => {
     const { t, locale } = useLocalization();
@@ -169,7 +170,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                 <ul className="mt-4 space-y-4 flex-grow overflow-y-auto pr-2">
                     {ticket.comments.map(comment => (
                         <li key={comment.id} className="flex gap-x-4">
-                            <img src={comment.author.avatar} alt="" className="h-10 w-10 rounded-full bg-gray-50 flex-shrink-0" />
+                            <img src={comment.author.avatar || DEFAULT_AVATAR_URL} alt="" className="h-10 w-10 rounded-full bg-gray-50 flex-shrink-0" />
                             <div className="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200 dark:ring-gray-700">
                                 <div className="flex justify-between">
                                     <p className="text-sm font-semibold">{comment.author.name}</p>
@@ -182,7 +183,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                      {ticket.comments.length === 0 && <p className="text-sm text-gray-500 text-center py-4">{t('ticketDetails.noComments')}</p>}
                 </ul>
                 <div className="mt-6 flex gap-x-3 flex-shrink-0">
-                    <img src={currentUser.avatar} alt="" className="h-10 w-10 rounded-full bg-gray-50" />
+                    <img src={currentUser.avatar || DEFAULT_AVATAR_URL} alt="" className="h-10 w-10 rounded-full bg-gray-50" />
                     <div className="flex-1">
                         <textarea
                             rows={3}

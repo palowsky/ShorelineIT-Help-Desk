@@ -71,6 +71,8 @@ const defaultBranding: BrandingSettingsType = {
   faviconUrl: '/vite.svg',
 };
 
+const DEFAULT_AVATAR_URL = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+
 const App: React.FC = () => {
     const [tickets, setTickets] = useState<Ticket[]>(initialTickets);
     const [users, setUsers] = useState<User[]>(initialUsers);
@@ -173,7 +175,7 @@ const App: React.FC = () => {
             username: newTicketData.customerName.toLowerCase().replace(/\s/g, ''),
             pin: '',
             role: Role.User,
-            avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(newTicketData.customerName)}`
+            avatar: DEFAULT_AVATAR_URL,
         };
 
         const newTicket: Ticket = {
@@ -224,7 +226,7 @@ const App: React.FC = () => {
             username,
             pin,
             role,
-            avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(username)}`,
+            avatar: DEFAULT_AVATAR_URL,
         };
         setUsers([newUser, ...users]);
     };

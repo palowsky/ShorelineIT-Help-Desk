@@ -10,6 +10,8 @@ interface UserSwitcherProps {
     onChangeAvatar: (newAvatarUrl: string) => void;
 }
 
+const DEFAULT_AVATAR_URL = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+
 const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout, onChangeAvatar }) => {
     const { t } = useLocalization();
     const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +36,7 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout, onCh
     return (
         <div className="relative">
             <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-x-2 rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-700">
-                <img src={currentUser.avatar} alt={currentUser.name} className="h-8 w-8 rounded-full" />
+                <img src={currentUser.avatar || DEFAULT_AVATAR_URL} alt={currentUser.name} className="h-8 w-8 rounded-full" />
                 <div>
                     <p className="text-sm font-semibold text-left">{currentUser.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 text-left">{getRoleName(currentUser.role)}</p>
