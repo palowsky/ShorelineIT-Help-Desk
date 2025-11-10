@@ -4,6 +4,7 @@ import StatusBadge from './StatusBadge';
 import PencilIcon from './icons/PencilIcon';
 import ArchiveBoxIcon from './icons/ArchiveBoxIcon';
 import ArchiveBoxArrowUpIcon from './icons/ArchiveBoxArrowUpIcon';
+import UserCircleIcon from './icons/UserCircleIcon';
 import { useLocalization } from '../context/LocalizationContext';
 
 interface TicketDetailsProps {
@@ -75,8 +76,10 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
         onUpdateTicket({ ...ticket, isArchived: !ticket.isArchived });
     };
 
+    const assignedTextParts = t('ticketDetails.assignedTo').split('{agentName}');
+
     return (
-        <div className="p-6 h-full flex flex-col">
+        <div className="p-6 h-full flex flex-col bg-white dark:bg-gray-800">
             <div className="flex-shrink-0">
                 <div className="flex items-start justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div>
@@ -163,6 +166,58 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({ ticket, currentUser, onUp
                         <button onClick={handleSave} className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700">{t('buttons.saveChanges')}</button>
                     </div>
                 )}
+            </div>
+
+            <div className="mt-8">
+                <h2 className="text-lg font-semibold">{t('ticketDetails.assignmentHistory')}</h2>
+                <div className="mt-4 flow-root">
+                    <ul role="list" className="-mb-8">
+                        {ticket.assignmentHistory && ticket.assignmentHistory.length > 0 ? (
+                            ticket.assignmentHistory.slice().reverse().map((entry, entryIdx) => (
+                                <li key={`${entry.timestamp}-${entry.agent?.id || 'unassigned'}`} className="relative pb-8">
+                                    {entryIdx !== ticket.assignmentHistory.length - 1 ? (
+                                        <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true" />
+                                    ) : null}
+                                    <div className="relative flex items-center space-x-3">
+                                        <div>
+                                            <span className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 ring-8 ring-white dark:ring-gray-800">
+                                                {entry.agent ? (
+                                                    <img src={entry.agent.avatar || DEFAULT_AVATAR_URL} alt="" className="h-8 w-8 rounded-full" />
+                                                 ) : (
+                                                    <UserCircleIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                {entry.agent 
+                                                    ? <span>{assignedTextParts[0]}<span className="font-semibold text-gray-900 dark:text-white">{entry.agent.name}</span>{assignedTextParts[1]}</span>
+                                                    : t('ticketDetails.unassignedEvent')
+                                                }
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-gray-500">
+                                                {formatDate(entry.timestamp)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))
+                        ) : (
+                            <li className="relative pb-8">
+                                <div className="relative flex items-center space-x-3">
+                                    <div>
+                                         <span className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 ring-8 ring-white dark:ring-gray-800">
+                                             <UserCircleIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                                        </span>
+                                    </div>
+                                    <div className="min-w-0 flex-1 pt-1.5">
+                                        <p className="text-sm text-gray-500 italic">{t('ticketDetails.noAssignmentHistory')}</p>
+                                    </div>
+                                </div>
+                            </li>
+                        )}
+                    </ul>
+                </div>
             </div>
 
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 flex-grow flex flex-col">

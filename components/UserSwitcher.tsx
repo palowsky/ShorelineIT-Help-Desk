@@ -7,12 +7,12 @@ import PhotoIcon from './icons/PhotoIcon';
 interface UserSwitcherProps {
     currentUser: User;
     onLogout: () => void;
-    onChangeAvatar: (newAvatarUrl: string) => void;
+    onOpenAvatarModal: () => void;
 }
 
 const DEFAULT_AVATAR_URL = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
-const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout, onChangeAvatar }) => {
+const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout, onOpenAvatarModal }) => {
     const { t } = useLocalization();
     const [isOpen, setIsOpen] = useState(false);
 
@@ -24,14 +24,6 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout, onCh
             default: return '';
         }
     }
-
-    const handleChangeAvatarClick = () => {
-        const newAvatarUrl = prompt("Enter new avatar image URL:");
-        if (newAvatarUrl) {
-            onChangeAvatar(newAvatarUrl);
-        }
-        setIsOpen(false);
-    };
 
     return (
         <div className="relative">
@@ -47,7 +39,10 @@ const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, onLogout, onCh
                     <div className="py-1 divide-y divide-gray-100 dark:divide-gray-700">
                          <div className="px-1 py-1">
                              <button
-                                onClick={handleChangeAvatarClick}
+                                onClick={() => {
+                                  onOpenAvatarModal();
+                                  setIsOpen(false);
+                                }}
                                 className="flex w-full items-center gap-x-3 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
                             >
                                 <PhotoIcon className="h-5 w-5" />

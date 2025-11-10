@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, Role } from '../types';
 import { useLocalization } from '../context/LocalizationContext';
 import PlusIcon from './icons/PlusIcon';
-import UserModal from './UserModal'; // Import the new modal component
+import UserModal from './UserModal';
+import ConfirmationModal from './ConfirmationModal';
+import TrashIcon from './icons/TrashIcon';
 
 interface UserManagementProps {
   users: User[];
@@ -21,9 +23,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [modalMode, setModalMode] = useState<'create' | 'resetPin'>('create');
+    const [showInactive, setShowInactive] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+    const filteredUsers = useMemo(() => {
+        return users.filter(user => showInactive || user.isActive);
+    }, [users, showInactive]);
 
     const handleRoleChange = (user: User, newRole: Role) => {
         onUpdateUser({ ...user, role: newRole });
+    };
+    
+    const handleToggleActive = (user: User) => {
+        onUpdateUser({ ...user, isActive: !user.isActive });
     };
 
     const handleOpenResetPinModal = (user: User) => {
@@ -32,10 +45,17 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
         setIsModalOpen(true);
     };
 
-    const handleDelete = (user: User) => {
-        if (confirm(t('users.confirmDelete', `Are you sure you want to delete ${user.name}?`))) {
-            onDeleteUser(user.id);
+    const openDeleteConfirmation = (user: User) => {
+        setUserToDelete(user);
+        setIsConfirmOpen(true);
+    };
+    
+    const handleDeleteConfirm = () => {
+        if (userToDelete) {
+            onDeleteUser(userToDelete.id);
         }
+        setIsConfirmOpen(false);
+        setUserToDelete(null);
     };
     
     const handleOpenCreateModal = () => {
@@ -63,14 +83,25 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
         <div className="p-6 w-full overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">{t('users.title')}</h1>
-                <button
-                    type="button"
-                    onClick={handleOpenCreateModal}
-                    className="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                >
-                    <PlusIcon className="h-5 w-5" />
-                    {t('users.addUser')}
-                </button>
+                <div className="flex items-center gap-4">
+                     <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={showInactive}
+                            onChange={(e) => setShowInactive(e.target.checked)}
+                            className="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <span>{t('users.showInactive')}</span>
+                    </label>
+                    <button
+                        type="button"
+                        onClick={handleOpenCreateModal}
+                        className="inline-flex items-center gap-x-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                    >
+                        <PlusIcon className="h-5 w-5" />
+                        {t('users.addUser')}
+                    </button>
+                </div>
             </div>
             
             <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
@@ -89,8 +120,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {users.map((user) => (
-                            <tr key={user.id}>
+                        {filteredUsers.map((user) => (
+                            <tr key={user.id} className={!user.isActive ? 'opacity-60 bg-gray-50 dark:bg-gray-800/50' : ''}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0 h-10 w-10">
@@ -98,7 +129,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
                                         </div>
                                         <div className="ml-4">
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">@{user.username}</div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">@{user.username} {!user.isActive && `(${t('users.inactive')})`}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -106,7 +137,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
                                     <select
                                         value={user.role}
                                         onChange={(e) => handleRoleChange(user, e.target.value as Role)}
-                                        disabled={user.id === currentUser.id}
+                                        disabled={user.id === currentUser.id || !user.isActive}
                                         className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 sm:text-sm disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-700"
                                     >
                                         {roles.map(role => (
@@ -114,17 +145,28 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
                                         ))}
                                     </select>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                    <button onClick={() => handleOpenResetPinModal(user)} className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
-                                        {t('users.resetPin')}
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(user)}
-                                        disabled={user.id === currentUser.id}
-                                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {t('users.delete')}
-                                    </button>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div className="flex items-center space-x-4">
+                                        <button
+                                            onClick={() => handleToggleActive(user)}
+                                            disabled={user.id === currentUser.id}
+                                            className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {user.isActive ? t('users.deactivate') : t('users.reactivate')}
+                                        </button>
+                                        <button onClick={() => handleOpenResetPinModal(user)} className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
+                                            {t('users.resetPin')}
+                                        </button>
+                                        <button
+                                            onClick={() => openDeleteConfirmation(user)}
+                                            disabled={user.id === currentUser.id}
+                                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            title={t('users.delete')}
+                                        >
+                                            <TrashIcon className="h-5 w-5" />
+                                            <span className="sr-only">{t('users.delete')}</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -137,6 +179,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, currentUser, onU
                     mode={modalMode}
                     onClose={handleCloseModal}
                     onSave={handleSaveUser}
+                />
+            )}
+            {isConfirmOpen && userToDelete && (
+                <ConfirmationModal
+                    isOpen={isConfirmOpen}
+                    onClose={() => setIsConfirmOpen(false)}
+                    onConfirm={handleDeleteConfirm}
+                    title={`${t('users.deleteUserTitle')} ${userToDelete.name}`}
+                    message={t('users.confirmDelete')}
                 />
             )}
         </div>

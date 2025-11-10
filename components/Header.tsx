@@ -14,11 +14,11 @@ interface HeaderProps {
   onLogout: () => void;
   view: 'tickets' | 'dashboard' | 'users' | 'settings';
   onSetView: (view: 'tickets' | 'dashboard' | 'users' | 'settings') => void;
-  onChangeAvatar: (newAvatarUrl: string) => void;
+  onOpenAvatarModal: () => void;
   branding: BrandingSettings;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, view, onSetView, onChangeAvatar, branding }) => {
+const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, view, onSetView, onOpenAvatarModal, branding }) => {
   const { t, setLocale, locale } = useLocalization();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   
@@ -106,7 +106,7 @@ const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, vie
               </div>
             )}
           </div>
-          <UserSwitcher currentUser={currentUser} onLogout={onLogout} onChangeAvatar={onChangeAvatar} />
+          <UserSwitcher currentUser={currentUser} onLogout={onLogout} onOpenAvatarModal={onOpenAvatarModal} />
           <button
             type="button"
             onClick={onNewTicket}

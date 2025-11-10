@@ -11,6 +11,7 @@ export interface User {
   pin: string;
   role: Role;
   avatar: string;
+  isActive: boolean;
 }
 
 export enum TicketStatus {
@@ -35,6 +36,11 @@ export interface Customer {
     name: string;
 }
 
+export interface Assignment {
+  agent?: User;
+  timestamp: string;
+}
+
 export interface Ticket {
   id: string;
   subject: string;
@@ -48,6 +54,7 @@ export interface Ticket {
   agent?: User;
   comments: Comment[];
   isArchived: boolean;
+  assignmentHistory: Assignment[];
 }
 
 export interface BrandingSettings {

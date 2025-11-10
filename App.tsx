@@ -7,14 +7,15 @@ import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
 import UserManagement from './components/UserManagement';
 import BrandingSettings from './components/BrandingSettings';
-import { Ticket, User, Role, TicketStatus, TicketPriority, TicketCategory, BrandingSettings as BrandingSettingsType } from './types';
+import ChangeAvatarModal from './components/ChangeAvatarModal';
+import { Ticket, User, Role, TicketStatus, TicketPriority, TicketCategory, BrandingSettings as BrandingSettingsType, Assignment } from './types';
 
 // Mock Data
 const initialUsers: User[] = [
-  { id: 'user-1', name: 'Alice Admin', username: 'admin', pin: '1234', role: Role.Admin, avatar: 'https://i.pravatar.cc/150?u=alice' },
-  { id: 'user-2', name: 'Bob Agent', username: 'agent', pin: '1234', role: Role.Agent, avatar: 'https://i.pravatar.cc/150?u=bob' },
-  { id: 'user-3', name: 'Charlie Customer', username: 'customer', pin: '1234', role: Role.User, avatar: 'https://i.pravatar.cc/150?u=charlie' },
-  { id: 'user-4', name: 'Diana Agent', username: 'diana', pin: '1234', role: Role.Agent, avatar: 'https://i.pravatar.cc/150?u=diana' },
+  { id: 'user-1', name: 'Alice Admin', username: 'admin', pin: '1234', role: Role.Admin, avatar: 'https://i.pravatar.cc/150?u=alice', isActive: true },
+  { id: 'user-2', name: 'Bob Agent', username: 'agent', pin: '1234', role: Role.Agent, avatar: 'https://i.pravatar.cc/150?u=bob', isActive: true },
+  { id: 'user-3', name: 'Charlie Customer', username: 'customer', pin: '1234', role: Role.User, avatar: 'https://i.pravatar.cc/150?u=charlie', isActive: true },
+  { id: 'user-4', name: 'Diana Agent', username: 'diana', pin: '1234', role: Role.Agent, avatar: 'https://i.pravatar.cc/150?u=diana', isActive: true },
 ];
 
 const initialTickets: Ticket[] = [
@@ -34,6 +35,9 @@ const initialTickets: Ticket[] = [
       { id: 'c2', author: initialUsers[1], content: 'I am looking into this now. Can you please provide your device model?', createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() }
     ],
     isArchived: false,
+    assignmentHistory: [
+      { agent: initialUsers[1], timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() }
+    ],
   },
   {
     id: 'TICKET-5678',
@@ -48,6 +52,9 @@ const initialTickets: Ticket[] = [
     agent: initialUsers[0],
     comments: [],
     isArchived: false,
+    assignmentHistory: [
+      { agent: initialUsers[0], timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }
+    ],
   },
   {
     id: 'TICKET-1011',
@@ -62,6 +69,9 @@ const initialTickets: Ticket[] = [
     agent: initialUsers[1],
     comments: [],
     isArchived: true,
+    assignmentHistory: [
+      { agent: initialUsers[1], timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() }
+    ],
   },
 ];
 
@@ -79,6 +89,7 @@ const App: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
     const [isNewTicketModalOpen, setIsNewTicketModalOpen] = useState(false);
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
     const [view, setView] = useState<'tickets' | 'dashboard' | 'users' | 'settings'>('tickets');
     const [showArchived, setShowArchived] = useState(false);
     const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
@@ -138,7 +149,7 @@ const App: React.FC = () => {
 
     const handleLogin = (username: string, pin: string): boolean => {
         const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.pin === pin);
-        if (user) {
+        if (user && user.isActive) {
             setCurrentUser(user);
             return true;
         }
@@ -156,8 +167,26 @@ const App: React.FC = () => {
     };
 
     const handleUpdateTicket = (updatedTicket: Ticket) => {
-        const newTickets = tickets.map(t => t.id === updatedTicket.id ? { ...updatedTicket, updatedAt: new Date().toISOString() } : t);
-        setTickets(newTickets);
+        setTickets(prevTickets => prevTickets.map(t => {
+            if (t.id === updatedTicket.id) {
+                const newTicketData = { ...updatedTicket, updatedAt: new Date().toISOString() };
+                
+                const oldAgentId = t.agent?.id;
+                const newAgentId = updatedTicket.agent?.id;
+
+                if (oldAgentId !== newAgentId) {
+                    const newAssignment: Assignment = {
+                        agent: updatedTicket.agent,
+                        timestamp: new Date().toISOString(),
+                    };
+                    const history = Array.isArray(t.assignmentHistory) ? t.assignmentHistory : [];
+                    newTicketData.assignmentHistory = [...history, newAssignment];
+                }
+                
+                return newTicketData;
+            }
+            return t;
+        }));
     };
 
     const handleAddTicket = (newTicketData: {
@@ -176,6 +205,7 @@ const App: React.FC = () => {
             pin: '',
             role: Role.User,
             avatar: DEFAULT_AVATAR_URL,
+            isActive: true,
         };
 
         const newTicket: Ticket = {
@@ -195,8 +225,12 @@ const App: React.FC = () => {
                 createdAt: new Date().toISOString(),
             }],
             isArchived: false,
+            assignmentHistory: [{
+                agent: undefined,
+                timestamp: new Date().toISOString(),
+            }],
         };
-        setTickets([newTicket, ...tickets]);
+        setTickets(prevTickets => [newTicket, ...prevTickets]);
     };
     
     const handleApplyFilter = (type: string, value: string) => {
@@ -209,14 +243,14 @@ const App: React.FC = () => {
     };
 
     const handleUpdateUser = (updatedUser: User) => {
-        setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+        setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
         if (currentUser && currentUser.id === updatedUser.id) {
             setCurrentUser(updatedUser);
         }
     };
 
     const handleDeleteUser = (userId: string) => {
-        setUsers(users.filter(u => u.id !== userId));
+        setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
     };
 
     const handleCreateUser = (name: string, username: string, role: Role, pin: string) => {
@@ -227,8 +261,9 @@ const App: React.FC = () => {
             pin,
             role,
             avatar: DEFAULT_AVATAR_URL,
+            isActive: true,
         };
-        setUsers([newUser, ...users]);
+        setUsers(prevUsers => [newUser, ...prevUsers]);
     };
     
     const handleChangeAvatar = (newAvatarUrl: string) => {
@@ -247,7 +282,7 @@ const App: React.FC = () => {
     }, [tickets, selectedTicketId]);
     
     const technicians = useMemo(() => {
-        return users.filter(u => u.role === Role.Admin || u.role === Role.Agent);
+        return users.filter(u => (u.role === Role.Admin || u.role === Role.Agent) && u.isActive);
     }, [users]);
 
     if (!currentUser) {
@@ -262,7 +297,7 @@ const App: React.FC = () => {
                 onLogout={handleLogout}
                 view={view}
                 onSetView={setView}
-                onChangeAvatar={handleChangeAvatar}
+                onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
                 branding={branding}
             />
             <main className="flex-grow flex min-h-0">
@@ -315,6 +350,14 @@ const App: React.FC = () => {
                 <NewTicketModal
                     onClose={() => setIsNewTicketModalOpen(false)}
                     onAddTicket={handleAddTicket}
+                    currentUser={currentUser}
+                />
+            )}
+            {isAvatarModalOpen && currentUser && (
+                <ChangeAvatarModal
+                    isOpen={isAvatarModalOpen}
+                    onClose={() => setIsAvatarModalOpen(false)}
+                    onSave={handleChangeAvatar}
                     currentUser={currentUser}
                 />
             )}
