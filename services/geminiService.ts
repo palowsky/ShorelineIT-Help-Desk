@@ -1,8 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TicketCategory, TicketPriority } from "../types";
 
-// Gemini Coding Guidelines: Always use `const ai = new GoogleGenAI({apiKey: process.env.API_KEY});`.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// The API key is loaded from Vite's environment variables.
+// In a production build, Vite replaces this with the actual key from the .env file.
+const apiKey = import.meta.env.VITE_API_KEY;
+if (!apiKey) {
+    // This provides a clear error in the browser console if the .env file is missing or misconfigured.
+    throw new Error("VITE_API_KEY is not set. Please create a .env file and add the key.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
+
 
 interface SuggestionResult {
     category: TicketCategory;

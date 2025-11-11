@@ -115,6 +115,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'branding.faviconUrlPlaceholder': 'https://example.com/favicon.ico',
     'branding.logoPreview': 'Logo Preview',
     'branding.save': 'Save Branding',
+    'theme.switchToDark': 'Switch to dark mode',
+    'theme.switchToLight': 'Switch to light mode',
   },
   es: {
     'header.title': 'Mesa de Ayuda',
@@ -228,6 +230,8 @@ const translations: Record<Locale, Record<string, string>> = {
     'branding.faviconUrlPlaceholder': 'https://ejemplo.com/favicon.ico',
     'branding.logoPreview': 'Vista Previa del Logo',
     'branding.save': 'Guardar Marca',
+    'theme.switchToDark': 'Cambiar a modo oscuro',
+    'theme.switchToLight': 'Cambiar a modo claro',
   }
 };
 
@@ -256,7 +260,6 @@ export const LocalizationProvider: React.FC<{ children: ReactNode }> = ({ childr
   return (
     <LocalizationContext.Provider value={contextValue}>
       {children}
-    {/* FIX: Corrected typo in closing tag from Localization-Provider to LocalizationContext.Provider */}
     </LocalizationContext.Provider>
   );
 };

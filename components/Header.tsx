@@ -7,6 +7,8 @@ import Cog6ToothIcon from './icons/Cog6ToothIcon';
 import UserSwitcher from './UserSwitcher';
 import { useLocalization } from '../context/LocalizationContext';
 import { User, Role, BrandingSettings } from '../types';
+import MoonIcon from './icons/MoonIcon';
+import SunIcon from './icons/SunIcon';
 
 interface HeaderProps {
   onNewTicket: () => void;
@@ -16,9 +18,11 @@ interface HeaderProps {
   onSetView: (view: 'tickets' | 'dashboard' | 'users' | 'settings') => void;
   onOpenAvatarModal: () => void;
   branding: BrandingSettings;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, view, onSetView, onOpenAvatarModal, branding }) => {
+const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, view, onSetView, onOpenAvatarModal, branding, theme, onToggleTheme }) => {
   const { t, setLocale, locale } = useLocalization();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   
@@ -106,6 +110,19 @@ const Header: React.FC<HeaderProps> = ({ onNewTicket, currentUser, onLogout, vie
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            title={theme === 'light' ? t('theme.switchToDark') : t('theme.switchToLight')}
+            className="inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <span className="sr-only">Toggle theme</span>
+            {theme === 'light' ? (
+              <MoonIcon className="h-5 w-5" />
+            ) : (
+              <SunIcon className="h-5 w-5" />
+            )}
+          </button>
           <UserSwitcher currentUser={currentUser} onLogout={onLogout} onOpenAvatarModal={onOpenAvatarModal} />
           <button
             type="button"

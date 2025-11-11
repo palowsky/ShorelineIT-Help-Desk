@@ -95,6 +95,26 @@ const App: React.FC = () => {
     const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
     const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null);
     const [branding, setBranding] = useState<BrandingSettingsType>(defaultBranding);
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+            return savedTheme;
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    });
+
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.body.classList.add('dark');
+        } else {
+            document.body.classList.remove('dark');
+        }
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const handleToggleTheme = () => {
+        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    };
     
     // Load branding from localStorage on initial load
     useEffect(() => {
@@ -299,6 +319,8 @@ const App: React.FC = () => {
                 onSetView={setView}
                 onOpenAvatarModal={() => setIsAvatarModalOpen(true)}
                 branding={branding}
+                theme={theme}
+                onToggleTheme={handleToggleTheme}
             />
             <main className="flex-grow flex min-h-0">
                 {view === 'tickets' && (
