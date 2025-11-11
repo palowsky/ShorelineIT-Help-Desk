@@ -1,15 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TicketCategory, TicketPriority } from "../types";
 
-const apiKey = import.meta.env.VITE_API_KEY;
-
-if (!apiKey) {
-  // This will stop the app from loading and show a clear error in the developer console
-  // if the API key is missing.
-  throw new Error("VITE_API_KEY is not defined. Please check your .env file and rebuild the application.");
-}
-
-const ai = new GoogleGenAI({ apiKey });
+// FIX: Adhere to @google/genai coding guidelines for API key management and client initialization.
+// The API key must be sourced from `process.env.API_KEY`.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 interface SuggestionResult {
     category: TicketCategory;
