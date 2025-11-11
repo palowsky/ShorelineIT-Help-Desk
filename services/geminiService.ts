@@ -1,10 +1,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TicketCategory, TicketPriority } from "../types";
 
-// Fix: Per coding guidelines, initialize GoogleGenAI with process.env.API_KEY.
-// This also resolves the TypeScript error related to 'import.meta.env'.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_API_KEY;
 
+if (!apiKey) {
+  // This will stop the app from loading and show a clear error in the developer console
+  // if the API key is missing.
+  throw new Error("VITE_API_KEY is not defined. Please check your .env file and rebuild the application.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 interface SuggestionResult {
     category: TicketCategory;
@@ -12,7 +17,16 @@ interface SuggestionResult {
 }
 
 export async function suggestCategoryAndPriority(description: string): Promise<Partial<SuggestionResult>> {
-  const prompt = `Suggest a category and priority for this IT support ticket: "${description}"`;
+  // A more robust prompt to guide the AI
+  const prompt = `Analyze the following IT support ticket description and determine the most appropriate Category and Priority.
+Category must be one of: 'Hardware', 'Software', 'Network', 'Account', 'Other'.
+Priority must be one of: 'Low', 'Medium', 'High', 'Critical'.
+
+Ticket Description:
+---
+${description}
+---
+`;
 
   try {
     const response = await ai.models.generateContent({
