@@ -1,15 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TicketCategory, TicketPriority } from "../types";
 
-// The API key is loaded from Vite's environment variables.
-// In a production build, Vite replaces this with the actual key from the .env file.
-const apiKey = import.meta.env.VITE_API_KEY;
-if (!apiKey) {
-    // This provides a clear error in the browser console if the .env file is missing or misconfigured.
-    throw new Error("VITE_API_KEY is not set. Please create a .env file and add the key.");
-}
-
-const ai = new GoogleGenAI({ apiKey });
+// Fix: Per Gemini guidelines, the API key must be from process.env.API_KEY and is assumed to be available.
+// Using import.meta.env is incorrect according to the guidelines and caused the TypeScript error.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
 interface SuggestionResult {
@@ -19,7 +13,8 @@ interface SuggestionResult {
 
 export async function suggestCategoryAndPriority(description: string): Promise<Partial<SuggestionResult>> {
   // Gemini Coding Guidelines: Simplify prompt when using responseSchema.
-  const prompt = `Based on the following IT support ticket description, suggest a category and priority.\nDescription: "${description}"`;
+  // Fix: The prompt is simplified for clarity and directness.
+  const prompt = `Suggest a category and priority for this IT support ticket: "${description}"`;
 
   try {
     const response = await ai.models.generateContent({
