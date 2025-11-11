@@ -1,8 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { TicketCategory, TicketPriority } from "../types";
 
-// Fix: Per Gemini guidelines, the API key must be from process.env.API_KEY and is assumed to be available.
-// Using import.meta.env is incorrect according to the guidelines and caused the TypeScript error.
+// Fix: Per coding guidelines, initialize GoogleGenAI with process.env.API_KEY.
+// This also resolves the TypeScript error related to 'import.meta.env'.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
@@ -12,8 +12,6 @@ interface SuggestionResult {
 }
 
 export async function suggestCategoryAndPriority(description: string): Promise<Partial<SuggestionResult>> {
-  // Gemini Coding Guidelines: Simplify prompt when using responseSchema.
-  // Fix: The prompt is simplified for clarity and directness.
   const prompt = `Suggest a category and priority for this IT support ticket: "${description}"`;
 
   try {
@@ -41,7 +39,6 @@ export async function suggestCategoryAndPriority(description: string): Promise<P
         },
     });
 
-    // Gemini Coding Guidelines: Correctly extract text from response.
     const text = response.text.trim();
     if (!text) {
         console.error("Gemini API returned an empty response.");
